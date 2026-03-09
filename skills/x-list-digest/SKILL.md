@@ -13,21 +13,24 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 4. Deduplicate by `tweet_id`.
 5. Filter aggressively. Keep only tweets that match the fixed tags and have clear signal quality.
 6. Prioritize airdrop info, trading setups, macro signals, and notable project updates for this user.
-7. Write files using date folders and time-window filenames: `data/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`.
+7. Write files using Beijing time with date folders and time-window filenames: `data/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`.
 8. Inside each note, use sections for aliases that produced useful content: 星, 看, maomao, meme, 生态, 项目, 其他.
-9. Do not record every tweet. Write only detailed summaries plus the author and source link for important items.
-10. Commit and push to the GitHub repo after generation when the user asked to save results.
+9. Do not record every tweet. Write only detailed summaries.
+10. In `Alpha 提取`, put tags, posting user, and original link directly under each item.
+11. Do not add a separate `重点来源` section.
+12. Commit and push to the GitHub repo after generation when the user asked to save results.
 
 ## Output rules
 
 - Always write Markdown in Obsidian-friendly format.
 - Date must be a folder.
 - File name must be the time window.
+- All displayed dates and times must use Beijing time.
 - Group content by alias inside the note.
 - For alias `星`, write the most detailed summary because it has the highest weight.
 - Filter out low-value and off-topic tweets.
 - Keep only tweets relevant to these tags when possible: `#airdrop` `#macro` `#trading` `#defi` `#ai` `#btc`.
-- For important points, include the posting user and original tweet link.
+- Put tags, posting user, and original link directly under each Alpha item.
 
 ## Commands
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import argparse, json, re, subprocess
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "data"
 FETCH = BASE_DIR / "scripts" / "fetch_list.py"
+BJ = timezone(timedelta(hours=8))
 LISTS = {
     "星": {"weight": 5, "url": "https://x.com/i/lists/1855801320558694836"},
     "看": {"weight": 4, "url": "https://x.com/i/lists/1857245607410442370"},
@@ -86,6 +87,11 @@ def summarize(tweet, tags):
     return short, "；".join(why) if why else "有一定信息价值"
 
 
+def to_bj_parts(created_at_iso):
+    dt = datetime.fromisoformat(created_at_iso).astimezone(BJ)
+    return dt.strftime("%Y-%m-%d"), dt.strftime("%H:%M:%S")
+
+
 def pick_signal_tweets(tweets):
     picked = []
     seen = set()
@@ -99,8 +105,11 @@ def pick_signal_tweets(tweets):
         if t["tweet_id"] in seen:
             continue
         seen.add(t["tweet_id"])
+        bj_date, bj_time = to_bj_parts(t["created_at"])
         t["tags"] = tags
         t["score"] = score
+        t["bj_date"] = bj_date
+        t["bj_time"] = bj_time
         picked.append(t)
     picked.sort(key=lambda x: (x["created_at"], x["score"]), reverse=False)
     return picked
@@ -113,8 +122,8 @@ def build_groups(data):
         if not picked:
             continue
         for t in picked:
-            dt = t["created_at"][:10]
-            tm = t["created_at"][11:19]
+            dt = t["bj_date"]
+            tm = t["bj_time"]
             g = groups[dt]
             g["aliases"][alias].append(t)
             if g["start"] is None or tm < g["start"]:
@@ -145,10 +154,12 @@ def alias_section(alias, tweets):
     lines += ["", "### Alpha 提取"]
     for t in top:
         short, why = summarize(t, t["tags"])
-        lines.append(f"- {short}（{why}）")
-    lines += ["", "### 重点来源"]
-    for t in top:
-        lines.append(f"- @{t['author']}｜{t['link']}")
+        lines += [
+            f"- {short}（{why}）",
+            f"  - 标签：{' '.join('#' + x for x in t['tags'])}",
+            f"  - 用户：@{t['author']}",
+            f"  - 链接：{t['link']}",
+        ]
     lines += ["", "### 标签", " ".join('#' + t for t in tags), ""]
     return lines, tags
 
@@ -160,7 +171,13 @@ def write_window_file(date_key, group):
     start = group["start"] or "00:00:00"
     end = group["end"] or "00:00:00"
     all_tags = []
-    body = ["---", f"date: {date_key}", f"window: {start}~{end}", "aliases:"]
+    body = [
+        "---",
+        f"date: {date_key}",
+        f"window: {start}~{end}",
+        "timezone: Asia/Shanghai",
+        "aliases:",
+    ]
     for alias in aliases_present:
         body.append(f"  - {alias}")
     body.append("tags:")
@@ -175,6 +192,7 @@ def write_window_file(date_key, group):
         body.append(f"  - {tag}")
     body += ["---", "", f"# 列表推文汇总｜{date_key}｜{start}~{end}", "", "## 总览"]
     body.append(f"- 本时间段覆盖 {len(aliases_present)} 个列表：{'、'.join(aliases_present)}。")
+    body.append("- 全部时间均使用北京时间（UTC+8）。")
     body.append("- 只保留有营养、且与标签相关的内容。")
     if "airdrop" in all_tags:
         body.append("- 已优先保留空投/积分相关内容。")
@@ -196,7 +214,7 @@ def git_commit_push(paths):
     rels = [str(Path(p).relative_to(repo)) for p in paths]
     subprocess.check_call(["git", "-C", str(repo), "add", *rels])
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    subprocess.check_call(["git", "-C", str(repo), "commit", "-m", f"Reset data layout and time-window digests ({stamp})"])
+    subprocess.check_call(["git", "-C", str(repo), "commit", "-m", f"Switch digest output to Beijing time and inline alpha links ({stamp})"])
     subprocess.check_call(["git", "-C", str(repo), "push"])
 
 

@@ -4,12 +4,15 @@ Write files using this structure:
 
 `data/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`
 
+Use **Beijing time (UTC+8)** for both folder dates and file time windows.
+
 Example:
 
 ```md
 ---
 date: 2026-03-09
 window: 08:12:56~12:33:59
+timezone: Asia/Shanghai
 aliases:
   - 星
   - 看
@@ -29,21 +32,20 @@ tags:
 - 详细总结
 
 ### Alpha 提取
-- 最强信号
-
-### 重点来源
-- @name｜https://x.com/.../status/123
-
-### 标签
-#airdrop #trading
+- 摘要内容
+  - 标签：#airdrop #trading
+  - 用户：@name
+  - 链接：https://x.com/.../status/123
 ```
 
 ## Rules
 
 - Date must be a folder.
 - File name must be the time window.
+- All displayed dates and times must use Beijing time.
 - Group content by alias inside the note.
 - Keep only high-signal tagged tweets.
 - Do not dump every tweet.
-- For important points, include the posting user and original link.
+- Put tags, posting user, and original link directly under each Alpha item.
+- Do not add a separate `重点来源` section.
 - Make `星` the most detailed section.
