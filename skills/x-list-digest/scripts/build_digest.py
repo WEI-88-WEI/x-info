@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse, json, re, subprocess
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -16,14 +17,15 @@ LISTS = {
     "其他": {"weight": 4, "url": "https://x.com/i/lists/1783529697554694355"},
 }
 TAG_RULES = {
-    "airdrop": ["airdrop", "撸毛", "空投", "积分", "wl", "whitelist", "eligible", "tge"],
-    "macro": ["特朗普", "原油", "美股", "加息", "降息", "宏观", "油价", "fed", "cpi", "亚盘"],
-    "trading": ["交易", "做多", "做空", "止盈", "止损", "fdv", "polymarket", "perp", "仓位", "套利", "ap y", "资金费"],
-    "defi": ["defi", "dex", "tvl", "流动性", "lp", "借贷", "链上"],
-    "ai": ["ai", "openclaw", "gpt", "agent", "模型", "龙虾"],
-    "btc": ["btc", "比特币", "大饼", "bitcoin"],
+    "airdrop": ["airdrop", "撸毛", "空投", "积分", "wl", "whitelist", "eligible", "tge", "alpha", "任务"],
+    "macro": ["特朗普", "原油", "美股", "加息", "降息", "宏观", "油价", "fed", "cpi", "亚盘", "纳指", "标普", "伊朗"],
+    "trading": ["交易", "做多", "做空", "止盈", "止损", "fdv", "polymarket", "perp", "仓位", "套利", "资金费", "开单", "赔率"],
+    "defi": ["defi", "dex", "tvl", "流动性", "lp", "借贷", "链上", "收益率", "质押"],
+    "ai": ["ai", "openclaw", "gpt", "agent", "模型", "龙虾", "codex"],
+    "btc": ["btc", "比特币", "大饼", "bitcoin", "strategy"],
 }
 PRIORITY = ["airdrop", "trading", "macro", "defi", "ai", "btc"]
+MIN_SCORE = 12
 
 
 def run_fetch(alias=None, all_aliases=False, limit=100, bootstrap=False):
@@ -48,128 +50,133 @@ def classify(text):
     return found
 
 
-def score_tweet(tweet):
-    text = tweet.get("text", "")
-    tags = classify(text)
+def clean(text):
+    return re.sub(r"\s+", " ", text or "").strip()
+
+
+def score_tweet(tweet, tags):
     metrics = tweet.get("metrics", {})
     score = metrics.get("like", 0) + metrics.get("retweet", 0) * 2 + metrics.get("quote", 0) * 2
-    for i, tag in enumerate(PRIORITY[::-1], start=1):
+    if metrics.get("view", 0) > 5000:
+        score += 4
+    if len(clean(tweet.get("text", ""))) > 100:
+        score += 2
+    for idx, tag in enumerate(PRIORITY, start=1):
         if tag in tags:
-            score += i * 5
-    if len(text) > 180:
-        score += 3
-    return score, tags
+            score += (len(PRIORITY) - idx + 1) * 3
+    return score
 
 
-def summarize_tweet(tweet, tags):
-    text = re.sub(r"\s+", " ", tweet.get("text", "")).strip()
-    short = text[:140] + ("…" if len(text) > 140 else "")
+def summarize(tweet, tags):
+    text = clean(tweet.get("text", ""))
+    short = text[:180] + ("…" if len(text) > 180 else "")
     why = []
     if "airdrop" in tags:
-        why.append("涉及空投/积分机会")
+        why.append("含空投/积分机会")
     if "trading" in tags:
-        why.append("包含交易或赔率信息")
+        why.append("含交易或赔率线索")
     if "macro" in tags:
-        why.append("带有宏观或事件驱动影响")
+        why.append("带宏观驱动")
     if "defi" in tags:
-        why.append("关联链上/DeFi 生态")
+        why.append("关联 DeFi / 链上生态")
     if "ai" in tags:
-        why.append("涉及 AI / Agent 方向")
+        why.append("涉及 AI / Agent")
     if "btc" in tags:
-        why.append("和 BTC 相关")
-    if not why:
-        why.append("属于列表中的一般动态")
-    return short, "；".join(why)
+        why.append("涉及 BTC 主线")
+    return short, "；".join(why) if why else "有一定信息价值"
 
 
-def build_note(alias, payload):
-    meta = LISTS[alias]
-    tweets = payload["tweets"]
-    if not tweets:
-        return None, None
-    dt = tweets[0]["created_at"][:10]
-    start = payload["window_start"]
-    end = payload["window_end"]
-    scored = []
-    all_tags = []
+def pick_signal_tweets(tweets):
+    picked = []
+    seen = set()
     for t in tweets:
-        score, tags = score_tweet(t)
+        tags = classify(t.get("text", ""))
+        if not tags:
+            continue
+        score = score_tweet(t, tags)
+        if score < MIN_SCORE:
+            continue
+        if t["tweet_id"] in seen:
+            continue
+        seen.add(t["tweet_id"])
         t["tags"] = tags
-        scored.append((score, t))
-        all_tags.extend(tags)
-    scored.sort(key=lambda x: x[0], reverse=True)
-    top = [t for _, t in scored[: (6 if alias == "星" else 4)]]
-    tag_list = []
-    for tag in PRIORITY:
-        if tag in all_tags and tag not in tag_list:
-            tag_list.append(tag)
-    overview = []
-    if "airdrop" in all_tags:
-        overview.append("空投/积分相关信息活跃，值得优先关注可执行机会。")
-    if "trading" in all_tags:
-        overview.append("交易与赔率类推文较多，适合提取短线情绪和策略线索。")
-    if "macro" in all_tags:
-        overview.append("出现宏观或事件驱动内容，需要和市场风险偏好联动看。")
-    if not overview:
-        overview.append("本时间窗以常规信息流更新为主。")
-    overview.append(f"新增 {len(tweets)} 条，重点覆盖 {alias} 列表。")
-    alpha = []
-    for t in top[:3 if alias != '星' else 5]:
-        short, why = summarize_tweet(t, t['tags'])
-        alpha.append(f"- {short}（{why}）")
-    title = f"{alias}｜{dt}｜{start}~{end}"
-    tags_inline = " ".join(f"#{t}" for t in tag_list)
-    lines = [
-        "---",
-        f"alias: {alias}",
-        f"weight: {meta['weight']}",
-        f"list_url: {meta['url']}",
-        f"date: {dt}",
-        f"window: {start}~{end}",
-        f"fetched_count: {payload['fetched_count']}",
-        f"new_count: {payload['new_count']}",
-        "tags:",
-    ]
-    for tag in tag_list:
-        lines.append(f"  - {tag}")
-    lines += [
-        "---",
-        "",
-        f"# {title}",
-        "",
-        "## 总览",
-    ]
-    for item in overview:
-        lines.append(f"- {item}")
-    lines += ["", "## Alpha 提取"]
-    lines += alpha or ["- 暂无明显 Alpha。"]
-    lines += ["", "## 分类标签", "", tags_inline or "#airdrop", "", "## 重点推文"]
-    for idx, t in enumerate(top, start=1):
-        short, why = summarize_tweet(t, t['tags'])
-        lines += [
-            "",
-            f"### {idx}. {short}",
-            f"- tweet_id: {t['tweet_id']}",
-            f"- author: @{t['author']}",
-            f"- time: {t['created_at'][11:19]} UTC",
-            f"- link: {t['link']}",
-            f"- 标签: {' '.join('#'+x for x in t['tags']) if t['tags'] else '无'}",
-            f"- 摘要: {short}",
-            f"- 为什么重要: {why}",
-        ]
-    lines += ["", "## 其他推文速览", ""]
-    remainder = [t for t in tweets if t not in top]
-    for t in remainder[:20]:
-        short, _ = summarize_tweet(t, t['tags'])
-        lines.append(f"- `{t['tweet_id']}`: {short}")
-    lines += ["", "## Source Links", ""]
+        t["score"] = score
+        picked.append(t)
+    picked.sort(key=lambda x: (x["score"], x["created_at"]), reverse=True)
+    return picked
+
+
+def build_daily_sections(data):
+    daily = defaultdict(lambda: defaultdict(list))
+    for alias, payload in data["aliases"].items():
+        picked = pick_signal_tweets(payload.get("tweets", []))
+        for t in picked:
+            dt = t["created_at"][:10]
+            daily[dt][alias].append(t)
+    return daily
+
+
+def alias_section(alias, tweets):
+    weight = LISTS[alias]["weight"]
+    tags = []
     for t in tweets:
-        lines.append(f"- {t['link']}")
-    out_dir = DATA_DIR / alias / dt
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{start}~{end}.md"
-    out_path.write_text("\n".join(lines) + "\n")
-    return out_path, tag_list
+        for tag in t["tags"]:
+            if tag not in tags:
+                tags.append(tag)
+    top_n = 5 if alias == "星" else 3
+    top = tweets[:top_n]
+    lines = [f"## {alias}（权重 {weight}）", "", "### 摘要"]
+    lines.append(f"- 本组共筛出 {len(tweets)} 条有效信号，已过滤无营养内容。")
+    if "airdrop" in tags:
+        lines.append("- 重点关注空投/积分相关机会。")
+    if "trading" in tags:
+        lines.append("- 有可跟踪的交易/赔率/仓位线索。")
+    if "macro" in tags:
+        lines.append("- 有宏观事件驱动，需结合市场风险偏好观察。")
+    lines += ["", "### Alpha 提取"]
+    for t in top:
+        short, why = summarize(t, t["tags"])
+        lines.append(f"- {short}（{why}）")
+    lines += ["", "### 重点来源"]
+    for t in top:
+        lines.append(f"- @{t['author']}｜{t['link']}")
+    lines += ["", "### 标签", " ".join('#' + t for t in tags), ""]
+    return lines, tags
+
+
+def write_daily_file(date_key, alias_map):
+    aliases_present = [a for a in LISTS if a in alias_map and alias_map[a]]
+    if not aliases_present:
+        return None, []
+    all_tags = []
+    body = ["---", f"date: {date_key}", "aliases:"]
+    for alias in aliases_present:
+        body.append(f"  - {alias}")
+    body.append("tags:")
+    section_blocks = []
+    for alias in aliases_present:
+        section, tags = alias_section(alias, alias_map[alias])
+        section_blocks.append(section)
+        for tag in tags:
+            if tag not in all_tags:
+                all_tags.append(tag)
+    for tag in all_tags:
+        body.append(f"  - {tag}")
+    body += ["---", "", f"# 列表推文日报｜{date_key}", "", "## 总览"]
+    body.append(f"- 当日共覆盖 {len(aliases_present)} 个列表：{'、'.join(aliases_present)}。")
+    if "airdrop" in all_tags:
+        body.append("- 已优先保留空投/积分相关内容。")
+    if "trading" in all_tags:
+        body.append("- 已优先保留交易和赔率相关内容。")
+    if "macro" in all_tags:
+        body.append("- 已提炼宏观驱动信息。")
+    body.append("- 无营养、无标签、低信号推文已过滤，不再逐条罗列。")
+    for section in section_blocks:
+        body += [""] + section
+    out_path = DATA_DIR / f"{date_key}.md"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("\n".join(body) + "\n")
+    return out_path, all_tags
 
 
 def git_commit_push(paths):
@@ -177,7 +184,7 @@ def git_commit_push(paths):
     rels = [str(Path(p).relative_to(repo)) for p in paths]
     subprocess.check_call(["git", "-C", str(repo), "add", *rels])
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    subprocess.check_call(["git", "-C", str(repo), "commit", "-m", f"Add X list digest notes ({stamp})"])
+    subprocess.check_call(["git", "-C", str(repo), "commit", "-m", f"Refine X daily digest format ({stamp})"])
     subprocess.check_call(["git", "-C", str(repo), "push"])
 
 
@@ -189,17 +196,18 @@ def main():
     ap.add_argument("--bootstrap", action="store_true")
     args = ap.parse_args()
     data = run_fetch(alias=args.alias, all_aliases=args.all, bootstrap=args.bootstrap)
+    daily = build_daily_sections(data)
     generated = []
-    summary = {}
-    for alias, payload in data["aliases"].items():
-        out_path, tags = build_note(alias, payload)
-        summary[alias] = {
-            "new_count": payload["new_count"],
-            "file": str(out_path) if out_path else None,
-            "tags": tags or [],
-        }
+    summary = {"errors": data.get("errors", {})}
+    for date_key, alias_map in sorted(daily.items()):
+        out_path, tags = write_daily_file(date_key, alias_map)
         if out_path:
             generated.append(out_path)
+            summary[date_key] = {
+                "file": str(out_path),
+                "aliases": [a for a in LISTS if a in alias_map and alias_map[a]],
+                "tags": tags,
+            }
     if args.commit and generated:
         generated.append(DATA_DIR / "state.json")
         git_commit_push(generated)

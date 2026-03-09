@@ -1,64 +1,59 @@
 # Obsidian Output Format
 
-Each generated note should follow this structure.
+Write one daily markdown file per date.
+
+Path:
+
+`data/<YYYY-MM-DD>.md`
+
+Example:
 
 ```md
 ---
-alias: 星
-weight: 5
-list_url: https://x.com/i/lists/1855801320558694836
 date: 2026-03-09
-window: 08:12:56~12:33:59
-fetched_count: 30
-new_count: 8
+aliases:
+  - 星
+  - 看
+  - maomao
+  - meme
+  - 生态
+  - 项目
+  - 其他
 tags:
   - airdrop
   - trading
+  - macro
 ---
 
-# 星｜2026-03-09｜08:12:56~12:33:59
+# 列表推文日报｜2026-03-09
 
 ## 总览
+- 今日最重要的信号
+- 只总结有营养的内容
 
-2-5 bullets summarizing the window.
+## 星（权重 5）
+### 摘要
+- 详细总结
 
-## Alpha 提取
+### Alpha 提取
+- 只写最强信号
 
-- strongest signals only
-- note why it matters
+### 重点来源
+- @name｜https://x.com/.../status/123
+- @name2｜https://x.com/.../status/456
 
-## 分类标签
+### 标签
+#airdrop #trading
 
-#airdrop #trading #macro
-
-## 重点推文
-
-### 1. <short headline>
-- tweet_id: 123
-- author: @name
-- time: 08:30:00 UTC
-- link: https://x.com/.../status/123
-- 摘要: ...
-- 为什么重要: ...
-
-## 其他推文速览
-
-- `123`: one-line summary
-- `456`: one-line summary
-
-## Source Links
-
-- https://x.com/.../status/123
-- https://x.com/.../status/456
+## 看（权重 4）
+...
 ```
 
-## Naming
+## Rules
 
-Write files to:
-
-`data/<alias>/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`
-
-Examples:
-
-- `data/星/2026-03-09/08:12:56~12:33:59.md`
-- `data/看/2026-03-09/12:34:00~15:10:22.md`
+- Use one file per date.
+- Include sections for the aliases that produced useful tagged tweets on that date.
+- Do not dump every tweet.
+- Keep only tweets that match the fixed tags and clear signal quality.
+- For important points, include the posting user and original link.
+- Make `星` the most detailed section.

@@ -1,6 +1,6 @@
 ---
 name: x-list-digest
-description: Fetch, deduplicate, analyze, tag, and archive tweets from a fixed set of X/Twitter Lists for Obsidian-based research. Use when the user asks things like “帮我获取列表推文”, wants list updates since the last fetch, wants summaries from the configured lists (星, 看, maomao, meme, 生态, 项目, 其他), or wants new tweets archived and pushed to GitHub.
+description: Fetch, deduplicate, filter, summarize, and archive tweets from a fixed set of X/Twitter Lists for Obsidian-based research. Use when the user asks things like “帮我获取列表推文”, wants list updates since the last fetch, wants summaries from the configured lists (星, 看, maomao, meme, 生态, 项目, 其他), or wants daily list digests pushed to GitHub.
 ---
 
 Use this skill to maintain a repeatable pipeline for the configured X lists.
@@ -12,24 +12,25 @@ Use the aliases and weights from `references/lists.md`.
 ## Workflow
 
 1. Run `scripts/fetch_list.py` for the requested alias, or for all aliases if the user does not specify one.
-2. If this is the first run for an alias on a given day, fetch the latest 30 tweets.
+2. If this is the first run for an alias or the user wants a rebuild, use bootstrap and fetch the latest 30 tweets.
 3. Otherwise, fetch recent tweets and keep only items newer than the alias checkpoint in `data/state.json`.
 4. Deduplicate by `tweet_id`.
-5. Analyze only the new tweets. Prioritize airdrop info, trading setups, macro signals, and notable project updates for this user.
-6. Assign tags from this fixed set when relevant: `#airdrop` `#macro` `#trading` `#defi` `#ai` `#btc`.
-7. Generate Obsidian markdown files under `data/<alias>/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`.
-8. Update `data/state.json` with the newest tweet id and timestamp processed for each alias.
-9. Commit and push to the GitHub repo after generation when the user asked to save results.
+5. Filter aggressively. Keep only tweets that match the fixed tags and have clear signal quality.
+6. Prioritize airdrop info, trading setups, macro signals, and notable project updates for this user.
+7. Generate one Obsidian markdown file per date under `data/<YYYY-MM-DD>.md`.
+8. Inside the date file, use sections for the aliases that produced useful content: 星, 看, maomao, meme, 生态, 项目, 其他.
+9. Do not record every tweet. Write only detailed summaries plus the author and source link for important items.
+10. Commit and push to the GitHub repo after generation when the user asked to save results.
 
 ## Output rules
 
 - Always write Markdown in Obsidian-friendly format.
-- Preserve the list-based directory structure.
-- Start each note with frontmatter.
-- Include: alias, list URL, weight, window start/end, fetched count, new count, tags, and source tweet links.
+- Use one file per date, not one file per alias window.
+- Include sections for aliases inside the daily file.
 - For alias `星`, write the most detailed summary because it has the highest weight.
-- Surface an `Alpha 提取` section with only the strongest takeaways.
-- Keep tweet ids in the note body for traceability.
+- Filter out low-value and off-topic tweets.
+- Keep only tweets relevant to these tags when possible: `#airdrop` `#macro` `#trading` `#defi` `#ai` `#btc`.
+- For important points, include the posting user and original tweet link.
 
 ## File format
 
@@ -49,19 +50,19 @@ Fetch all aliases:
 python3 {baseDir}/scripts/fetch_list.py --all
 ```
 
-Build one digest note:
+Build daily digests:
 
 ```bash
-python3 {baseDir}/scripts/build_digest.py --alias 星
+python3 {baseDir}/scripts/build_digest.py --all
 ```
 
-Bootstrap one alias with the latest 30 tweets when you need the first note or want to rebuild the latest window:
+Bootstrap and rebuild from the latest 30 tweets:
 
 ```bash
-python3 {baseDir}/scripts/build_digest.py --alias 星 --bootstrap
+python3 {baseDir}/scripts/build_digest.py --all --bootstrap
 ```
 
-Build all digest notes and push to GitHub:
+Build daily digests and push to GitHub:
 
 ```bash
 python3 {baseDir}/scripts/build_digest.py --all --commit
@@ -69,6 +70,6 @@ python3 {baseDir}/scripts/build_digest.py --all --commit
 
 ## GitHub
 
-Use `build_digest.py --commit` to commit and push only generated digest files and the state file.
+Use `build_digest.py --commit` to commit and push only generated daily digest files and the state file.
 
 Do not push unrelated workspace files.

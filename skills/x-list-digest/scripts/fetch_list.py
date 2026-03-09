@@ -58,7 +58,7 @@ def run_xreach(url, limit=100):
     if CT0:
         cmd += ["--ct0", CT0]
     cmd += ["list-tweets", url, "-n", str(limit), "--json"]
-    out = subprocess.check_output(cmd, text=True)
+    out = subprocess.check_output(cmd, text=True, stderr=subprocess.STDOUT)
     return json.loads(out)
 
 
@@ -137,23 +137,26 @@ def main():
         sys.exit(2)
 
     state = load_state()
-    result = {"generated_at": datetime.now(timezone.utc).isoformat(), "aliases": {}}
+    result = {"generated_at": datetime.now(timezone.utc).isoformat(), "aliases": {}, "errors": {}}
 
     for alias in targets:
         meta = LISTS[alias]
-        payload = run_xreach(meta["url"], args.limit)
-        rows = normalize_items(payload.get("items", []))
-        new_rows = filter_new(alias, rows, state, bootstrap=args.bootstrap)
-        checkpoint(alias, new_rows, state)
-        result["aliases"][alias] = {
-            "weight": meta["weight"],
-            "url": meta["url"],
-            "fetched_count": len(rows),
-            "new_count": len(new_rows),
-            "window_start": new_rows[0]["created_at"][11:19] if new_rows else None,
-            "window_end": new_rows[-1]["created_at"][11:19] if new_rows else None,
-            "tweets": new_rows,
-        }
+        try:
+            payload = run_xreach(meta["url"], args.limit)
+            rows = normalize_items(payload.get("items", []))
+            new_rows = filter_new(alias, rows, state, bootstrap=args.bootstrap)
+            checkpoint(alias, new_rows, state)
+            result["aliases"][alias] = {
+                "weight": meta["weight"],
+                "url": meta["url"],
+                "fetched_count": len(rows),
+                "new_count": len(new_rows),
+                "window_start": new_rows[0]["created_at"][11:19] if new_rows else None,
+                "window_end": new_rows[-1]["created_at"][11:19] if new_rows else None,
+                "tweets": new_rows,
+            }
+        except Exception as e:
+            result["errors"][alias] = str(e)
 
     save_state(state)
     print(json.dumps(result, ensure_ascii=False, indent=2))
