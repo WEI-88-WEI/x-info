@@ -102,18 +102,26 @@ def pick_signal_tweets(tweets):
         t["tags"] = tags
         t["score"] = score
         picked.append(t)
-    picked.sort(key=lambda x: (x["score"], x["created_at"]), reverse=True)
+    picked.sort(key=lambda x: (x["created_at"], x["score"]), reverse=False)
     return picked
 
 
-def build_daily_sections(data):
-    daily = defaultdict(lambda: defaultdict(list))
+def build_groups(data):
+    groups = defaultdict(lambda: {"aliases": defaultdict(list), "start": None, "end": None})
     for alias, payload in data["aliases"].items():
         picked = pick_signal_tweets(payload.get("tweets", []))
+        if not picked:
+            continue
         for t in picked:
             dt = t["created_at"][:10]
-            daily[dt][alias].append(t)
-    return daily
+            tm = t["created_at"][11:19]
+            g = groups[dt]
+            g["aliases"][alias].append(t)
+            if g["start"] is None or tm < g["start"]:
+                g["start"] = tm
+            if g["end"] is None or tm > g["end"]:
+                g["end"] = tm
+    return groups
 
 
 def alias_section(alias, tweets):
@@ -123,6 +131,7 @@ def alias_section(alias, tweets):
         for tag in t["tags"]:
             if tag not in tags:
                 tags.append(tag)
+    tweets = sorted(tweets, key=lambda x: x["score"], reverse=True)
     top_n = 5 if alias == "星" else 3
     top = tweets[:top_n]
     lines = [f"## {alias}（权重 {weight}）", "", "### 摘要"]
@@ -144,37 +153,40 @@ def alias_section(alias, tweets):
     return lines, tags
 
 
-def write_daily_file(date_key, alias_map):
-    aliases_present = [a for a in LISTS if a in alias_map and alias_map[a]]
+def write_window_file(date_key, group):
+    aliases_present = [a for a in LISTS if a in group["aliases"] and group["aliases"][a]]
     if not aliases_present:
         return None, []
+    start = group["start"] or "00:00:00"
+    end = group["end"] or "00:00:00"
     all_tags = []
-    body = ["---", f"date: {date_key}", "aliases:"]
+    body = ["---", f"date: {date_key}", f"window: {start}~{end}", "aliases:"]
     for alias in aliases_present:
         body.append(f"  - {alias}")
     body.append("tags:")
-    section_blocks = []
+    sections = []
     for alias in aliases_present:
-        section, tags = alias_section(alias, alias_map[alias])
-        section_blocks.append(section)
+        section, tags = alias_section(alias, group["aliases"][alias])
+        sections.append(section)
         for tag in tags:
             if tag not in all_tags:
                 all_tags.append(tag)
     for tag in all_tags:
         body.append(f"  - {tag}")
-    body += ["---", "", f"# 列表推文日报｜{date_key}", "", "## 总览"]
-    body.append(f"- 当日共覆盖 {len(aliases_present)} 个列表：{'、'.join(aliases_present)}。")
+    body += ["---", "", f"# 列表推文汇总｜{date_key}｜{start}~{end}", "", "## 总览"]
+    body.append(f"- 本时间段覆盖 {len(aliases_present)} 个列表：{'、'.join(aliases_present)}。")
+    body.append("- 只保留有营养、且与标签相关的内容。")
     if "airdrop" in all_tags:
         body.append("- 已优先保留空投/积分相关内容。")
     if "trading" in all_tags:
         body.append("- 已优先保留交易和赔率相关内容。")
     if "macro" in all_tags:
         body.append("- 已提炼宏观驱动信息。")
-    body.append("- 无营养、无标签、低信号推文已过滤，不再逐条罗列。")
-    for section in section_blocks:
+    for section in sections:
         body += [""] + section
-    out_path = DATA_DIR / f"{date_key}.md"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_dir = DATA_DIR / date_key
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"{start}~{end}.md"
     out_path.write_text("\n".join(body) + "\n")
     return out_path, all_tags
 
@@ -184,7 +196,7 @@ def git_commit_push(paths):
     rels = [str(Path(p).relative_to(repo)) for p in paths]
     subprocess.check_call(["git", "-C", str(repo), "add", *rels])
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    subprocess.check_call(["git", "-C", str(repo), "commit", "-m", f"Refine X daily digest format ({stamp})"])
+    subprocess.check_call(["git", "-C", str(repo), "commit", "-m", f"Reset data layout and time-window digests ({stamp})"])
     subprocess.check_call(["git", "-C", str(repo), "push"])
 
 
@@ -196,17 +208,18 @@ def main():
     ap.add_argument("--bootstrap", action="store_true")
     args = ap.parse_args()
     data = run_fetch(alias=args.alias, all_aliases=args.all, bootstrap=args.bootstrap)
-    daily = build_daily_sections(data)
+    groups = build_groups(data)
     generated = []
     summary = {"errors": data.get("errors", {})}
-    for date_key, alias_map in sorted(daily.items()):
-        out_path, tags = write_daily_file(date_key, alias_map)
+    for date_key, group in sorted(groups.items()):
+        out_path, tags = write_window_file(date_key, group)
         if out_path:
             generated.append(out_path)
             summary[date_key] = {
                 "file": str(out_path),
-                "aliases": [a for a in LISTS if a in alias_map and alias_map[a]],
+                "aliases": [a for a in LISTS if a in group["aliases"] and group["aliases"][a]],
                 "tags": tags,
+                "window": f"{group['start']}~{group['end']}"
             }
     if args.commit and generated:
         generated.append(DATA_DIR / "state.json")
