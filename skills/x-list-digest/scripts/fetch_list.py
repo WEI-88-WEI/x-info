@@ -86,10 +86,12 @@ def normalize_items(items):
     return rows
 
 
-def filter_new(alias, rows, state):
+def filter_new(alias, rows, state, bootstrap=False):
     alias_state = state["aliases"].get(alias, {})
     last_id = alias_state.get("latest_tweet_id")
     last_ts = alias_state.get("latest_created_at")
+    if bootstrap:
+        return rows[-30:]
     if not last_id and not last_ts:
         return rows[-30:]
     fresh = []
@@ -126,6 +128,7 @@ def main():
     ap.add_argument("--alias")
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--limit", type=int, default=100)
+    ap.add_argument("--bootstrap", action="store_true")
     args = ap.parse_args()
 
     targets = list(LISTS.keys()) if args.all else [args.alias]
@@ -140,7 +143,7 @@ def main():
         meta = LISTS[alias]
         payload = run_xreach(meta["url"], args.limit)
         rows = normalize_items(payload.get("items", []))
-        new_rows = filter_new(alias, rows, state)
+        new_rows = filter_new(alias, rows, state, bootstrap=args.bootstrap)
         checkpoint(alias, new_rows, state)
         result["aliases"][alias] = {
             "weight": meta["weight"],

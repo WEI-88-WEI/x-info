@@ -49,13 +49,26 @@ Fetch all aliases:
 python3 {baseDir}/scripts/fetch_list.py --all
 ```
 
+Build one digest note:
+
+```bash
+python3 {baseDir}/scripts/build_digest.py --alias 星
+```
+
+Bootstrap one alias with the latest 30 tweets when you need the first note or want to rebuild the latest window:
+
+```bash
+python3 {baseDir}/scripts/build_digest.py --alias 星 --bootstrap
+```
+
+Build all digest notes and push to GitHub:
+
+```bash
+python3 {baseDir}/scripts/build_digest.py --all --commit
+```
+
 ## GitHub
 
-After writing notes:
-
-1. `git status`
-2. `git add data/ skills/x-list-digest/`
-3. `git commit -m "Add X list digest for <date/window>"`
-4. `git push`
+Use `build_digest.py --commit` to commit and push only generated digest files and the state file.
 
 Do not push unrelated workspace files.
