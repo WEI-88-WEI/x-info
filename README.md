@@ -1,120 +1,123 @@
 # x-info
 
-X/Twitter list intelligence for OpenClaw.
+面向 OpenClaw 的 X/Twitter 列表情报整理仓库。
 
-This repo contains an OpenClaw skill focused on turning noisy X/Twitter list timelines into a compact, decision-oriented research feed.
+这个仓库的核心目标，不是做一个“推文备份站”，而是把固定 X 列表里的高噪音时间线，整理成**更适合快速阅读、判断和执行的高信号摘要**。
 
-## Included skill
+## 包含的 Skill
 
 - `skills/x-list-digest`
 
 ---
 
-## What this repo is for
+## 这个仓库是干什么的
 
-This repo is built for a specific workflow:
+这个仓库服务于一条很明确的工作流：
 
-- monitor a fixed set of X/Twitter lists
-- pull fresh tweets from those lists
-- filter out low-signal content
-- keep the strongest items for a crypto-native operator
-- rewrite them into readable Chinese notes
-- archive the result as Obsidian-friendly markdown
-- push the latest digest data back to GitHub
+- 监控一组固定的 X/Twitter Lists
+- 抓取这些列表里的最新推文
+- 去重、筛选、排序
+- 把低质量、低信息量内容剔掉
+- 把真正有价值的内容整理成中文可读摘要
+- 生成适合 Obsidian 阅读和归档的 Markdown
+- 把最新 digest 数据同步回 GitHub
 
-It is **not** trying to be a full X archive.
-It is a **high-signal list digest pipeline**.
+所以它**不是全量归档**，而是：
 
----
-
-## Who this is optimized for
-
-The current skill behavior is optimized for a user with this profile:
-
-- crypto native
-- cares about airdrops and qualification windows
-- cares about trading setups and market transmission
-- wants macro events translated into actionable watchpoints
-- follows DeFi mechanism changes, yield / vault / points systems, and onchain capital rotation
-- cares about AI / agent infrastructure when it has real strategy value
-- wants BTC-related context, but not BTC-only content
-
-That user profile affects the ranking, filtering, and summary style.
+> 一个面向实战使用的高信号列表摘要管线。
 
 ---
 
-## What the skill does
+## 这个 Skill 主要为谁优化
 
-When asked things like:
+当前这套 `x-list-digest` 的行为，主要针对下面这种用户画像做优化：
+
+- 熟悉加密市场
+- 关心空投、积分、资格和参与窗口
+- 关心交易线索、赔率变化、仓位和市场传导
+- 希望把宏观事件快速映射到交易观察点
+- 关注 DeFi 机制变化、资金迁移、vault / yield / points 体系
+- 关注 AI / Agent 赛道，但前提是它真的有策略价值
+- 需要 BTC 相关上下文，但不希望整个 digest 被 BTC 单一叙事占满
+
+这意味着：
+
+- 筛选逻辑不是“谁火留谁”
+- 而是“谁对这个用户更有用，就优先留谁”
+
+---
+
+## 这个 Skill 会做什么
+
+当用户说这些话时，比如：
 
 - `帮我获取列表推文`
 - `获取今天的列表推文`
-- `推 github`
 - `重新抓取并总结`
+- `推 github`
 
-`skills/x-list-digest` is designed to:
+`skills/x-list-digest` 会尽量完成下面这些事情：
 
-1. fetch tweets from the configured X lists
-2. deduplicate by `tweet_id`
-3. rank tweets by signal quality
-4. penalize low-value content such as:
-   - reposts / RT-heavy items
-   - slogan-like AI marketing posts
-   - vague brand content
-   - low-specificity commentary
-   - multiple tweets saying nearly the same thing
-5. prioritize tweets with:
-   - clear opportunity windows
-   - metrics / numbers / caps / points / FDV / OI / vault changes
-   - macro-to-market transmission clues
-   - DeFi mechanism changes or capital flow signals
-   - meaningful BTC context
-6. generate a compact markdown digest in Beijing time
-7. add a top-level `全部列表总结`
-8. write per-list `Alpha 提取` items in **conclusion mode**, not raw tweet-copy mode
-9. show each source as:
-   - display name
-   - handle
-   - original link
-10. add concise Chinese translation for non-Chinese tweets
-11. write output into `skills/x-list-digest/data/`
-12. optionally sync the latest data back to GitHub
-
----
-
-## Current output philosophy
-
-The digest is intentionally opinionated.
-
-### It tries to do this
-
-- be fast to scan
-- preserve decision value
-- reduce timeline noise
-- convert scattered tweets into readable conclusions
-- help the user decide what is worth:
-  - watching
-  - digging deeper on
-  - participating in
-
-### It avoids doing this
-
-- dumping full list timelines
-- keeping low-information engagement bait
-- repeating the same theme too many times
-- bloated markdown full of template filler
-- acting like a neutral archive when a ranked digest is more useful
+1. 从配置好的 X 列表里抓取推文
+2. 按 `tweet_id` 去重
+3. 对推文做信号质量排序
+4. 明显压低这些内容的权重：
+   - RT / 转推
+   - 口号式 AI 宣传
+   - 模糊品牌内容
+   - 低信息量评论
+   - 多条表达同一件事的重复推文
+5. 明显提高这些内容的权重：
+   - 有数字、额度、上限、FDV、OI、积分、资格等明确参数
+   - 有交易线索
+   - 有宏观到市场的传导线索
+   - 有 DeFi 机制变化或资金迁移
+   - 有明确参与窗口
+6. 用北京时间生成 markdown 文件
+7. 在文档开头生成 `全部列表总结`
+8. 按列表分组输出 `Alpha 提取`
+9. 每条 Alpha 采用“结论式”而不是“照抄推文式”表达
+10. 每条内容保留：
+    - 用户显示名
+    - `@handle`
+    - 原始链接
+11. 如果原文不是中文，则补一段简洁中文翻译
+12. 把结果写入 `skills/x-list-digest/data/`
+13. 在需要时把最新数据提交并推送到 GitHub
 
 ---
 
-## Output structure
+## 当前输出风格
 
-A generated digest usually contains:
+现在这套 digest 输出，是带明显倾向性的。
 
-- frontmatter metadata
-- one file per Beijing-time date / time window
+### 它想做到的是：
+
+- 扫得快
+- 信息密度高
+- 少废话
+- 不堆模板
+- 不只是“摘录推文”
+- 而是把推文变成可理解、可判断、可继续跟的内容
+
+### 它刻意避免的是：
+
+- 全量倒时间线
+- 保留低质量热闹内容
+- 重复讲同一件事
+- 写一堆模板化空话
+- 假装自己是中立新闻流，而不是一个高信号 digest
+
+---
+
+## 输出结构说明
+
+一份生成后的 digest 通常包括：
+
+- frontmatter 元数据
+- 按北京时间划分的日期 / 时间窗文件
 - `全部列表总结`
-- per-alias sections such as:
+- 各列表分组，比如：
   - 星
   - 看
   - maomao
@@ -122,55 +125,70 @@ A generated digest usually contains:
   - 生态
   - 项目
   - 其他
-- inside each alias section:
-  - `Alpha 提取`
-  - concise conclusion-style items
-  - optional `为什么重要`
-  - optional `你该怎么用`
-  - translation for non-Chinese tweets
-  - tags
-  - display name + handle
-  - original X link
+- 每个列表下的 `Alpha 提取`
 
-The current system prefers:
+每条 Alpha 目前倾向包含：
 
-- **fewer, stronger items**
-- not full coverage for coverage’s sake
+- `结论`
+- 只有在确实有价值时才写：
+  - `为什么重要`
+  - `你该怎么用`
+- 非中文推文的中文翻译
+- 标签
+- 用户显示名 + handle
+- 原始 X 链接
 
----
+当前的原则是：
 
-## Global summary behavior
-
-The `全部列表总结` block is meant to answer questions like:
-
-- which lists were most information-dense today?
-- what is the real cross-list market narrative?
-- where are the highest-quality opportunities?
-- where is the noise concentrated?
-- what deserves active watching next?
-
-This summary is written from the user’s point of view, not as a neutral newsroom recap.
+> 宁可少一点，也要更硬一点。
 
 ---
 
-## Translation behavior
+## `全部列表总结` 是干什么的
 
-For tweets whose main content is not Chinese, the skill adds a concise Chinese translation.
+`全部列表总结` 不是装饰区块，它的目标是回答这些问题：
 
-This translation is meant to be:
+- 今天哪几个列表最有信息密度？
+- 今天跨列表真正的共识主线是什么？
+- 机会主要集中在哪里？
+- 噪音主要集中在哪里？
+- 接下来应该继续盯什么？
 
-- readable
-- compressed
-- decision-oriented
+这部分是按用户视角写的，重点不是“复述发生了什么”，而是：
 
-It is **not** intended to be a perfect sentence-by-sentence literary translation.
-The goal is: the user should understand why the tweet matters without needing to open X.
+- 哪些值得继续跟
+- 哪些只是热闹
+- 哪些更像机会，哪些更像噪音
 
 ---
 
-## Configured list aliases
+## 翻译策略
 
-The current skill is configured around these aliases:
+如果推文主体不是中文，skill 会在条目下补一段中文翻译。
+
+这里的翻译目标不是逐字逐句，而是：
+
+- 压缩
+- 可读
+- 有判断价值
+
+也就是说，它更像：
+
+- “中文摘要”
+
+而不是：
+
+- “逐句文学翻译”
+
+目标很明确：
+
+> 让用户不点开 X，也能知道这条为什么值得看。
+
+---
+
+## 已配置的列表别名
+
+当前 skill 使用这些固定别名：
 
 - 星
 - 看
@@ -180,129 +198,135 @@ The current skill is configured around these aliases:
 - 项目
 - 其他
 
-These aliases are treated as stable buckets for digest generation.
+这些别名会作为 digest 输出时的固定分组。
 
 ---
 
-## Output paths
+## 输出路径
 
-Generated files live under:
+生成的文件位于：
 
 - `skills/x-list-digest/data/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`
 - `skills/x-list-digest/data/state.json`
 
-### `state.json`
+### `state.json` 的作用
 
-`state.json` stores checkpoint state for each alias so the skill can:
+`state.json` 用来记录每个 alias 的抓取 checkpoint，方便 skill：
 
-- know what has already been seen
-- fetch incrementally on later runs
-- avoid repeatedly re-processing the same tweets
-
----
-
-## Typical workflow used in practice
-
-A common operator flow is:
-
-1. clear old `data`
-2. fetch fresh tweets from all configured lists
-3. rebuild the latest digest
-4. keep only the current digest file and `state.json`
-5. commit and push the refreshed data to GitHub
-
-In short:
-
-- clear
-- fetch
-- filter
-- summarize
-- archive
-- push
+- 知道哪些内容已经看过
+- 在后续抓取时做增量更新
+- 避免反复处理同样的推文
 
 ---
 
-## GitHub sync behavior
+## 实际使用中的典型流程
 
-This repo is commonly used as a lightweight distribution layer for the latest digest output.
+当前这套仓库，常见工作流一般是：
 
-Typical sync behavior:
+1. 清空旧 `data`
+2. 抓取当前最新列表推文
+3. 重新生成 digest
+4. 本地只保留当前 digest 和 `state.json`
+5. 把更新后的 data 推回 GitHub
 
-- remove stale digest data
-- write the newly generated digest
-- keep `state.json`
-- commit only the intended digest data update
-- push to `main`
+也就是：
 
-This keeps the repo aligned with the most recent curated output instead of accumulating a lot of stale intermediate files.
-
----
-
-## Why the repo may not contain every tweet
-
-That is intentional.
-
-The skill is designed to optimize for:
-
-- signal density
-- user relevance
-- downstream actionability
-
-So if a tweet is missing, common reasons are:
-
-- it was too low-signal
-- it duplicated a stronger tweet
-- it was generic AI / branding noise
-- it lacked relevance to the user’s focus areas
-- it lost in ranking against stronger items in the same alias bucket
+- 清理
+- 抓取
+- 筛选
+- 总结
+- 归档
+- 推送
 
 ---
 
-## Design principles behind the skill
+## GitHub 同步逻辑
 
-The current implementation follows a few practical rules:
+这个仓库经常被当作“最新 digest 的分发层”。
 
-### 1. Signal > completeness
+所以典型同步行为是：
 
-A digest is more useful than a dump.
+- 删除旧 data
+- 写入新的 digest
+- 保留 `state.json`
+- 只提交本次应提交的数据更新
+- push 到 `main`
 
-### 2. Conclusions > excerpts
-
-Users care more about:
-
-- what happened
-- why it matters
-- what to watch
-
-than raw tweet text.
-
-### 3. Relevance > popularity
-
-A viral post is not automatically useful.
-
-### 4. Chinese readability matters
-
-The user should be able to read the digest directly, without bouncing back and forth into X.
-
-### 5. Cross-list synthesis matters
-
-The best signal often appears only after combining multiple lists, not from reading one tweet in isolation.
+它的目标不是保留所有中间历史版本，
+而是让仓库始终对齐**当前最新的一版高质量摘要结果**。
 
 ---
 
-## Example use cases
+## 为什么仓库里不一定有每一条推文
 
-This repo / skill is a good fit when you want to:
+这是故意的，不是漏了。
 
-- get today’s strongest list signals in one pass
-- monitor airdrop opportunities without reading every post manually
-- track macro-driven market narratives through curated X lists
-- keep a research notebook in Obsidian-ready markdown
-- push the latest digest to GitHub for later reading or automation
+常见原因包括：
+
+- 推文信号太弱
+- 和另一条更强的内容重复
+- 只是 AI / 品牌 / 情绪噪音
+- 和当前用户的关注重点不够相关
+- 在同一个列表分组里，被更强的条目压过去了
+
+这个仓库优化的是：
+
+- 信息密度
+- 用户相关性
+- 后续可执行性
+
+而不是：
+
+- 全量保留
 
 ---
 
-## Repository layout
+## 这个 Skill 背后的设计原则
+
+当前实现基本遵循下面几条原则：
+
+### 1. 信号优先于完整
+
+digest 的价值高于 dump。
+
+### 2. 结论优先于摘录
+
+用户更关心：
+
+- 发生了什么
+- 为什么重要
+- 下一步该看什么
+
+而不是大段原文照抄。
+
+### 3. 相关性优先于热度
+
+热门不代表有用。
+
+### 4. 中文可读性很重要
+
+用户应该直接看 digest 就能理解，不必来回跳 X。
+
+### 5. 跨列表综合判断很重要
+
+最强的信号，往往不是来自某一条推文本身，
+而是来自多个列表之间的共振。
+
+---
+
+## 适合的使用场景
+
+这个仓库 / skill 适合用来：
+
+- 快速获取当天最强的列表信号
+- 用更省时间的方式盯空投机会
+- 追踪宏观事件如何传导到加密市场
+- 把列表信息沉淀成 Obsidian 可读 markdown
+- 把最新 digest 自动同步到 GitHub 供后续使用
+
+---
+
+## 仓库结构
 
 ```text
 x-info/
@@ -322,7 +346,9 @@ x-info/
 
 ---
 
-## Notes
+## 说明
 
-This repo reflects an actively iterated workflow.
-The output format, ranking rules, translation behavior, and summary style may continue to evolve as the digest gets tuned for better signal quality.
+这个仓库对应的是一套持续迭代中的工作流。
+
+输出格式、排序逻辑、翻译方式、摘要风格、GitHub 同步方式，都可能继续调整。
+目标不是“固定格式永远不变”，而是不断把 digest 调到更适合真实使用的状态。
