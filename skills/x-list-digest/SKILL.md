@@ -1,6 +1,6 @@
 ---
 name: x-list-digest
-description: Fetch, deduplicate, filter, summarize, and archive tweets from a fixed set of X/Twitter Lists for Obsidian-based research. Use when the user asks things like “帮我获取列表推文”, wants list updates since the last fetch, wants summaries from the configured lists (星, 看, maomao, meme, 生态, 项目, 其他), or wants time-window list digests pushed to GitHub.
+description: Fetch, deduplicate, filter, and archive tweets from a fixed set of X/Twitter Lists for Obsidian-based research. Use when the user asks things like “帮我获取列表推文”, wants list updates since the last fetch, wants per-tweet notes from the configured lists (星, 看, maomao, meme, 生态, 项目, 其他), or wants time-window list digests pushed to GitHub.
 ---
 
 Use this skill to maintain a repeatable pipeline for the configured X lists.
@@ -15,10 +15,11 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 6. Prioritize airdrop info, trading setups, macro signals, and notable project updates for this user.
 7. Write files using Beijing time with date folders and time-window filenames: `data/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`.
 8. Inside each note, use sections for aliases that produced useful content: 星, 看, maomao, meme, 生态, 项目, 其他.
-9. Do not record every tweet. Write only detailed summaries.
-10. In `Alpha 提取`, put tags, posting user, and original link directly under each item.
-11. Do not add a separate `重点来源` section.
-12. Commit and push to the GitHub repo after generation when the user asked to save results.
+9. Do not add overview, executive summary, recap, or other top-level summary blocks.
+10. Do not add any separate tags section, summary section, or `重点来源` section.
+11. For each kept tweet, write one standalone item with the useful content, then put that tweet's tags, posting user, and original link directly under that item.
+12. Do not duplicate metadata elsewhere in the note.
+13. Commit and push to the GitHub repo after generation when the user asked to save results.
 
 ## Output rules
 
@@ -27,10 +28,12 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 - File name must be the time window.
 - All displayed dates and times must use Beijing time.
 - Group content by alias inside the note.
-- For alias `星`, write the most detailed summary because it has the highest weight.
+- Do not add top-level overview or summary sections.
+- For alias `星`, allow more detail per tweet because it has the highest weight.
 - Filter out low-value and off-topic tweets.
 - Keep only tweets relevant to these tags when possible: `#airdrop` `#macro` `#trading` `#defi` `#ai` `#btc`.
-- Put tags, posting user, and original link directly under each Alpha item.
+- Put tags, posting user, and original link directly under each kept tweet item.
+- Do not add a separate tags block at the end or beginning of the note.
 
 ## Commands
 
