@@ -54,4 +54,5 @@ aliases:
 - Do not add `总览`、模板化 `摘要`、单独 `标签` 区块或 `重点来源` section.
 - Do not append interpretation tails like `这条偏政策...` / `适合放进宏观环境变量里看` after the factual summary.
 - For English tweets, translate the useful content into Chinese instead of leaving the main sentence in English.
+- If a summary still contains obvious English sentence fragments after rewriting, drop that item instead of mixing languages.
 - Make `星` the most detailed section.

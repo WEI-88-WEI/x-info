@@ -207,6 +207,16 @@ def is_chinese_dominant(text):
     return cjk >= max(6, latin // 2)
 
 
+def has_excess_english(text):
+    cleaned = re.sub(r"@[A-Za-z0-9_]+", "", text)
+    cleaned = re.sub(r"\b[A-Za-z_]+\.[A-Za-z0-9_()]+\b", "", cleaned)
+    cleaned = re.sub(r"\b[A-Z]{2,}\b", "", cleaned)
+    cjk = len(re.findall(r"[\u4e00-\u9fff]", cleaned))
+    english_words = re.findall(r"\b[A-Za-z]{4,}\b", cleaned)
+    english_chars = sum(len(word) for word in english_words)
+    return len(english_words) >= 4 and english_chars > cjk
+
+
 def looks_low_signal(text):
     simple = clean(text)
     if not simple:
@@ -371,6 +381,41 @@ def translate_common_templates(text):
         price = bitcoin_reclaim_pattern.group("price")
         return f"比特币重新站上 {price} 美元。"
 
+    crosschain_bridge_pattern = re.match(
+        r"(?is)(?:crosschain|cross-chain)\s+payments?\s+should\s+feel\s+native\.\s+with\s+(?P<kit>[A-Za-z0-9 ._\-]+),\s+developers\s+can\s+move\s+(?P<asset>\$?[A-Za-z0-9]+)\s+from\s+(?P<src>[A-Za-z0-9._@\-]+)\s+to\s+(?P<dst>[A-Za-z0-9._@\-]+)\s+in\s+a\s+single\s+(?P<call>[A-Za-z0-9_().]+)\s+call\s+so\s+builders\s+can\s+focus\s+on\s+shipping\..*$",
+        compact,
+    )
+    if crosschain_bridge_pattern:
+        kit = prettify_entity(crosschain_bridge_pattern.group("kit"))
+        asset = crosschain_bridge_pattern.group("asset").lstrip("$")
+        src = prettify_entity(crosschain_bridge_pattern.group("src"))
+        dst = prettify_entity(crosschain_bridge_pattern.group("dst"))
+        call = crosschain_bridge_pattern.group("call")
+        return f"{kit} 支持开发者通过一次 {call} 调用，把 {asset} 从 {src} 转到 {dst}，让跨链支付更接近原生体验。"
+
+    claw_network_pattern = re.match(
+        r"(?is)early\s+v\.?1\s+alpha\s+skill\s+to\s+connect\s+your\s+claw\s+to\s+send\s+a\s+message\s+and\s+find\s+other\s+agents\s+on\s+an\s+open\s+secure\s+network\.\s+please\s+give\s+us\s+feedback!?$",
+        compact,
+    )
+    if claw_network_pattern:
+        return "推出早期 v1 alpha skill，可让 Claw 在开放且安全的网络上发送消息并发现其他 agents，欢迎反馈。"
+
+    bill_autofill_pattern = re.match(
+        r"(?is)the\s+most\s+tedious\s+part\s+of\s+paying\s+a\s+bill\s+is(?:\s+not|n't)\s+the\s+payment\.\s+it'?s\s+everything\s+before\s+it\.\s+upload\s+or\s+forward\s+a\s+bill\s+to\s+(?P<product>[A-Za-z0-9._@\-]+)\.\s+ai\s+reads\s+it\s+and\s+prefills\s+every\s+detail\..*$",
+        compact,
+    )
+    if bill_autofill_pattern:
+        product = prettify_entity(bill_autofill_pattern.group("product"))
+        return f"支付账单最麻烦的不是付款本身，而是前置准备；把账单上传或转发给 {product} 后，AI 会读取内容并预填所有细节。"
+
+    trade_kit_pattern = re.match(
+        r"(?is)your\s+trading\s+strategy\s+doesn'?t\s+need\s+a\s+day\s+off\.\s+agent\s+trade\s+kit[；;,.\s]+(?P<tools>\d+)\s+tools\.\s+24\s*/\s*7\s+execution\.\s+no\s+vacation\s+days\.?$",
+        compact,
+    )
+    if trade_kit_pattern:
+        tools = trade_kit_pattern.group("tools")
+        return f"Agent Trade Kit 提供 {tools} 个工具，支持 24/7 执行，主打让交易策略不用休息。"
+
     trump_rates_pattern = re.match(
         r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?president\s+trump\s+says\s+(?:federal\s+reserve|fed)\s+chair\s+jerome\s+powell\s+should\s+lower\s+interest\s+rates\s+'?immediately'?(?:\s+without\s+waiting\s+for\s+the\s+next\s+fomc\s+meeting)?\.?$",
         compact,
@@ -484,13 +529,16 @@ def decorate_tweet(alias, tweet):
     score = score_tweet(tweet, tags)
     if score < MIN_SCORE:
         return None
+    summary = summarize(tweet, tags)
+    if tweet.get("lang") not in ("zh", "zh-cn", "zh-tw") and has_excess_english(summary):
+        return None
     bj_date, bj_time = to_bj_parts(tweet["created_at"])
     decorated = dict(tweet)
     decorated.update({
         "alias": alias,
         "tags": tags,
         "score": score,
-        "summary": summarize(tweet, tags),
+        "summary": summary,
         "bj_date": bj_date,
         "bj_time": bj_time,
         "signature": normalize_for_similarity(tweet.get("text", "")),

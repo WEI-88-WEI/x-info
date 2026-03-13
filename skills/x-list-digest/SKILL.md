@@ -21,8 +21,9 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 12. For each kept tweet, write one compact Chinese summary line. Then put that tweet's tags, posting user display name plus handle, and original link directly under the item.
 13. Do not emit `判断` or `动作` lines, and do not append interpretive tails like `这条偏政策和监管信号` or `适合放进宏观环境变量里看`.
 14. For non-Chinese tweets, rewrite the main content into concise Chinese instead of dumping the English original.
-15. If the source says `bought another 30,000 ETH via FalconX 8 hours ago`, the summary should read like `8 小时前又通过 FalconX 买入 30,000 枚 ETH` rather than leaving the English sentence intact.
-16. Commit and push to the GitHub repo after generation when the user asked to save results.
+15. If a rewritten summary still leaves obvious English sentence fragments, drop that item rather than emitting mixed-language output.
+16. If the source says `bought another 30,000 ETH via FalconX 8 hours ago`, the summary should read like `8 小时前又通过 FalconX 买入 30,000 枚 ETH` rather than leaving the English sentence intact.
+17. Commit and push to the GitHub repo after generation when the user asked to save results.
 
 ## Output rules
 
