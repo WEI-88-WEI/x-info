@@ -28,7 +28,7 @@ TAG_RULES = {
     "trading": ["交易", "做多", "做空", "止盈", "止损", "fdv", "polymarket", "perp", "仓位", "套利", "资金费", "开单", "赔率", "entry", "tp", "sl", "breakout"],
     "defi": ["defi", "dex", "tvl", "流动性", "lp", "借贷", "链上", "收益率", "质押", "deposit", "deposits", "bridge", "vault"],
     "ai": ["ai", "openclaw", "gpt", "agent", "模型", "龙虾", "codex", "cursor", "claude"],
-    "btc": ["btc", "比特币", "大饼", "bitcoin", "strategy"],
+    "btc": ["btc", "eth", "ethereum", "比特币", "大饼", "bitcoin", "strategy"],
 }
 PRIORITY = ["airdrop", "trading", "macro", "defi", "ai", "btc"]
 TAG_BONUS = {
@@ -93,6 +93,8 @@ PHRASE_REPLACEMENTS = [
     (r"\blive\b", "上线"),
     (r"\bmainnet\b", "主网"),
     (r"\btestnet\b", "测试网"),
+    (r"\bfederal reserve\b", "美联储"),
+    (r"\bcentral bank digital currency\b", "CBDC"),
     (r"\bu\.?s\.? senate\b", "美国参议院"),
     (r"\bsenate\b", "参议院"),
     (r"\bfed\b", "美联储"),
@@ -101,10 +103,22 @@ PHRASE_REPLACEMENTS = [
     (r"\bhousing\b", "住房"),
     (r"\bbill\b", "法案"),
     (r"\bprovision\b", "条款"),
+    (r"\bvoted? to include\b", "投票支持加入"),
     (r"\bvoted to\b", "投票支持"),
     (r"\bvote(?:d|s)? for\b", "投票支持"),
     (r"\badd(?:ed|ing)?\b", "加入"),
+    (r"\bban on\b", "禁止"),
     (r"\bban(?:ning|ned|s)?\b", "禁止"),
+    (r"\breclaims?\b", "重新站上"),
+    (r"\bbitcoin\b", "比特币"),
+    (r"\bpresident\b", "总统"),
+    (r"\bchair\b", "主席"),
+    (r"\bjerome powell\b", "鲍威尔"),
+    (r"\bsays\b", "表示"),
+    (r"\bshould\b", "应"),
+    (r"\blower interest rates\b", "降息"),
+    (r"\bimmediately\b", "立即"),
+    (r"\bwithout waiting for the next fomc meeting\b", "无需等到下次 FOMC 会议"),
     (r"\bbought another\b", "再次买入"),
     (r"\bbought\b", "买入"),
     (r"\bsold\b", "卖出"),
@@ -157,11 +171,24 @@ def clean(text):
     return text
 
 
+def contains_term(text, term):
+    haystack = text.lower()
+    needle = term.lower()
+    if re.search(r"[\u4e00-\u9fff]", needle):
+        return needle in haystack
+    pattern = rf"(?<![a-z0-9_]){re.escape(needle)}(?![a-z0-9_])"
+    return re.search(pattern, haystack) is not None
+
+
+def has_any_term(text, terms):
+    return any(contains_term(text, term) for term in terms)
+
+
 def classify(text):
     lower = clean(text).lower()
     found = []
     for tag, terms in TAG_RULES.items():
-        if any(term.lower() in lower for term in terms):
+        if has_any_term(lower, terms):
             found.append(tag)
     return found
 
@@ -200,9 +227,9 @@ def specificity_bonus(text):
         bonus += 1
     if re.search(r"\$[A-Z0-9]{2,10}\b", text):
         bonus += 1
-    if any(term in text.lower() for term in ACTION_TERMS if term.isascii()):
+    if has_any_term(text.lower(), [term for term in ACTION_TERMS if term.isascii()]):
         bonus += 2
-    if any(term in text for term in ACTION_TERMS if not term.isascii()):
+    if has_any_term(text, [term for term in ACTION_TERMS if not term.isascii()]):
         bonus += 2
     if len(text) >= 80:
         bonus += 1
@@ -234,7 +261,8 @@ def score_tweet(tweet, tags):
 
 def strip_prefix_noise(text):
     text = re.sub(r"^RT @[A-Za-z0-9_]+:\s*", "", text)
-    text = re.sub(r"^(?:NEW|BREAKING|NEWS|UPDATE)\s*[:：\-]\s*", "", text, flags=re.I)
+    text = re.sub(r"^(?:JUST IN|NEW|BREAKING|NEWS|UPDATE)\s*[:：\-]\s*", "", text, flags=re.I)
+    text = re.sub(r"^[🇺🇸🇨🇳🇯🇵🇪🇺🇬🇧🇭🇰🇸🇬\s]+", "", text)
     return text.strip()
 
 
@@ -327,6 +355,29 @@ def prettify_entity(text):
 
 def translate_common_templates(text):
     compact = normalize_clause(text)
+
+    senate_cbdc_pattern = re.match(
+        r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?(?:u\.?s\.?\s+)?senate\s+votes\s+to\s+include\s+(?:a\s+)?ban\s+on\s+federal\s+reserve\s+central\s+bank\s+digital\s+currency\s+in\s+(?:a\s+)?bipartisan\s+housing\s+bill\.?$",
+        compact,
+    )
+    if senate_cbdc_pattern:
+        return "美国参议院投票支持在两党住房法案中加入禁止美联储发行 CBDC 的条款。"
+
+    bitcoin_reclaim_pattern = re.match(
+        r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?bitcoin\s+reclaims?\s+\$?(?P<price>[\d,]+(?:\.\d+)?)\.?$",
+        compact,
+    )
+    if bitcoin_reclaim_pattern:
+        price = bitcoin_reclaim_pattern.group("price")
+        return f"比特币重新站上 {price} 美元。"
+
+    trump_rates_pattern = re.match(
+        r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?president\s+trump\s+says\s+federal\s+reserve\s+chair\s+jerome\s+powell\s+should\s+lower\s+interest\s+rates\s+'?immediately'?(?:\s+without\s+waiting\s+for\s+the\s+next\s+fomc\s+meeting)?\.?$",
+        compact,
+    )
+    if trump_rates_pattern:
+        return "特朗普表示，美联储主席鲍威尔应立即降息，无需等到下次 FOMC 会议。"
+
     buy_pattern = re.match(
         r"(?i)(?:it seems that\s+)?(?P<buyer>.+?)\s+bought another\s+(?P<amount>[\d,]+(?:\.\d+)?)\s+(?P<asset>\$?[A-Za-z0-9]+)\s*\((?P<value>\$?[\d,]+(?:\.\d+)?[KMB]?)\)\s+via\s+(?P<venue>#?[A-Za-z0-9_]+)\s+(?P<time>\d+\s+(?:minutes?|hours?|days?|weeks?|months?))\s+ago\.?$",
         compact,
