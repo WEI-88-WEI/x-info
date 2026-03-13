@@ -357,7 +357,7 @@ def translate_common_templates(text):
     compact = normalize_clause(text)
 
     senate_cbdc_pattern = re.match(
-        r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?(?:u\.?s\.?\s+)?senate\s+votes\s+to\s+include\s+(?:a\s+)?ban\s+on\s+federal\s+reserve\s+central\s+bank\s+digital\s+currency\s+in\s+(?:a\s+)?bipartisan\s+housing\s+bill\.?$",
+        r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?(?:u\.?s\.?\s+)?senate\s+votes\s+to\s+include\s+(?:a\s+)?(?:ban\s+on|banning)\s+(?:federal\s+reserve|fed)\s+central\s+bank\s+digital\s+currency\s+in\s+(?:a\s+)?bipartisan\s+housing\s+bill\.?$",
         compact,
     )
     if senate_cbdc_pattern:
@@ -372,7 +372,7 @@ def translate_common_templates(text):
         return f"比特币重新站上 {price} 美元。"
 
     trump_rates_pattern = re.match(
-        r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?president\s+trump\s+says\s+federal\s+reserve\s+chair\s+jerome\s+powell\s+should\s+lower\s+interest\s+rates\s+'?immediately'?(?:\s+without\s+waiting\s+for\s+the\s+next\s+fomc\s+meeting)?\.?$",
+        r"(?i)(?:just in:\s*)?(?:🇺🇸\s*)?president\s+trump\s+says\s+(?:federal\s+reserve|fed)\s+chair\s+jerome\s+powell\s+should\s+lower\s+interest\s+rates\s+'?immediately'?(?:\s+without\s+waiting\s+for\s+the\s+next\s+fomc\s+meeting)?\.?$",
         compact,
     )
     if trump_rates_pattern:
