@@ -614,52 +614,47 @@ def strip_terminal_punct(text):
 
 
 def build_global_summary(selected_by_alias, all_selected):
-    alias_count = len(selected_by_alias)
-    total_count = len(all_selected)
+    ranked = sorted(
+        all_selected,
+        key=lambda x: (x["score"], LISTS[x["alias"]]["weight"], x["created_at"]),
+        reverse=True,
+    )
 
-    tag_counts = defaultdict(int)
-    alias_tag_counts = defaultdict(set)
-    for tweet in all_selected:
-        for tag in tweet["tags"]:
-            tag_counts[tag] += 1
-            alias_tag_counts[tag].add(tweet["alias"])
+    def pick_by_tag(tag, limit=2):
+        items = []
+        seen = set()
+        for tweet in ranked:
+            if tag not in tweet["tags"]:
+                continue
+            tid = tweet.get("tweet_id")
+            if tid in seen:
+                continue
+            seen.add(tid)
+            items.append(tweet)
+            if len(items) >= limit:
+                break
+        return items
 
-    ranked_tags = [tag for tag, _ in sorted(tag_counts.items(), key=lambda item: (item[1], TAG_BONUS.get(item[0], 0)), reverse=True)]
-    label_map = {
-        "airdrop": "空投/积分",
-        "trading": "交易",
-        "macro": "宏观",
-        "defi": "DeFi/链上",
-        "ai": "AI",
-        "btc": "BTC/ETH",
-    }
+    def join_summaries(items):
+        return "；".join(strip_terminal_punct(item["summary"]) for item in items if item.get("summary"))
 
     summary_lines = []
-    if ranked_tags:
-        top_labels = [label_map[tag] for tag in ranked_tags[:3]]
-        summary_lines.append(f"这批内容主要集中在{'、'.join(top_labels)}，本次共整理 {total_count} 条高信号内容，覆盖 {alias_count} 个列表。")
 
-    market_parts = []
-    if "btc" in tag_counts:
-        market_parts.append("BTC/ETH 反弹与风险偏好回升是最强主线")
-    if "macro" in tag_counts:
-        market_parts.append("宏观侧围绕油价、政策与流动性预期继续驱动市场情绪")
-    if "trading" in tag_counts:
-        market_parts.append("交易讨论明显偏向顺势和短线节奏")
-    if market_parts:
-        summary_lines.append("；".join(market_parts) + "。")
+    market_items = pick_by_tag("btc", 2) + [x for x in pick_by_tag("macro", 2) if x not in pick_by_tag("btc", 2)]
+    if market_items:
+        summary_lines.append(join_summaries(market_items[:3]) + "。")
 
-    opportunity_parts = []
-    if "airdrop" in tag_counts:
-        opportunity_parts.append("空投/积分仍有可跟进线索")
-    if "defi" in tag_counts:
-        opportunity_parts.append("链上资金流和协议数据值得继续跟")
-    if "ai" in tag_counts:
-        opportunity_parts.append("AI 相关内容有增量但整体不如交易与宏观强")
-    if opportunity_parts:
-        summary_lines.append("机会侧：" + "；".join(opportunity_parts) + "。")
+    trade_items = pick_by_tag("trading", 2)
+    defi_airdrop_items = []
+    for tag in ("airdrop", "defi", "ai"):
+        for tweet in pick_by_tag(tag, 1):
+            if tweet not in trade_items and tweet not in defi_airdrop_items:
+                defi_airdrop_items.append(tweet)
+    if trade_items or defi_airdrop_items:
+        combined = (trade_items + defi_airdrop_items)[:3]
+        summary_lines.append(join_summaries(combined) + "。")
 
-    return summary_lines[:3]
+    return [line for line in summary_lines if line][:2]
 
 
 def alias_section(alias, tweets):

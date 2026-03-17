@@ -18,8 +18,10 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 9. Keep the note lean. Do not add `总览`、模板化 `摘要`、单独 `标签` 区块或 `重点来源` 区块。
 10. Add a short `全部列表总结` near the top. Write it as an overall digest of the whole batch, not as a showcase of a few picked tweets.
 11. Do not use `先看：` or any similar picked-items intro.
-12. Summarize the batch-level picture: strongest market direction, main narratives, where opportunities concentrate, and what risks or noise remain.
-13. Do not include alias-distribution lines like `空投/积分主要在…` / `交易主要在…` / `宏观主要在…`.
+12. Summarize the batch-level picture with concrete content from this batch: actual price moves, policy events, protocol updates, funding flows, trading setups, numbers, and conditions.
+13. Do not start with bookkeeping or meta-stat lines like `这批内容主要集中在…` or `本次共整理…`.
+14. Avoid vague analyst filler like `风险偏好回升` / `值得继续跟` / `情绪改善` unless tied to specific events or numbers from the batch.
+15. Do not include alias-distribution lines like `空投/积分主要在…` / `交易主要在…` / `宏观主要在…`.
 11. Under each alias, keep only the strongest subset after ranking. Prefer fewer, sharper items over completeness.
 12. For each kept tweet, write one compact Chinese summary line. Then put that tweet's tags, posting user display name plus handle, and original link directly under the item.
 13. Do not emit `判断` or `动作` lines, and do not append interpretive tails like `这条偏政策和监管信号` or `适合放进宏观环境变量里看`.
