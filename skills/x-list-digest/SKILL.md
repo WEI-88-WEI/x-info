@@ -16,7 +16,9 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 7. Write files using Beijing time with date folders and time-window filenames: `data/<YYYY-MM-DD>/<HH:MM:SS~HH:MM:SS>.md`.
 8. Inside each note, use sections for aliases that produced useful content: 星, 看, maomao, meme, 生态, 项目, 其他.
 9. Keep the note lean. Do not add `总览`、模板化 `摘要`、单独 `标签` 区块或 `重点来源` 区块。
-10. Add a short `全部列表总结` near the top. It should synthesize the strongest cross-list themes, the most actionable items, and where noise is concentrated.
+10. Add a short `全部列表总结` near the top. Keep it lean and useful: use a short intro line like `先看：` followed by 2-3 bullet points for the strongest items.
+11. Do not collapse multiple key items into one long sentence separated by semicolons.
+12. Do not include alias-distribution lines like `空投/积分主要在…` / `交易主要在…` / `宏观主要在…`.
 11. Under each alias, keep only the strongest subset after ranking. Prefer fewer, sharper items over completeness.
 12. For each kept tweet, write one compact Chinese summary line. Then put that tweet's tags, posting user display name plus handle, and original link directly under the item.
 13. Do not emit `判断` or `动作` lines, and do not append interpretive tails like `这条偏政策和监管信号` or `适合放进宏观环境变量里看`.

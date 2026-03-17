@@ -621,24 +621,10 @@ def build_global_summary(selected_by_alias, all_selected):
         reverse=True,
     )[:3]
     if top:
-        lines.append("先看这几条：" + "；".join(strip_terminal_punct(tweet["summary"]) for tweet in top) + "。")
-
-    theme_bits = []
-    label_map = {
-        "airdrop": "空投/积分",
-        "trading": "交易",
-        "macro": "宏观",
-        "defi": "DeFi/链上",
-        "ai": "AI",
-        "btc": "BTC",
-    }
-    for tag in PRIORITY:
-        aliases = [alias for alias, tweets in selected_by_alias.items() if any(tag in tweet["tags"] for tweet in tweets)]
-        if aliases:
-            theme_bits.append(f"{label_map[tag]}主要在 {'、'.join(aliases)}")
-    if theme_bits:
-        lines.append("；".join(theme_bits[:3]) + "。")
-    return lines[:2]
+        lines.append("先看：")
+        for tweet in top:
+            lines.append(f"- {strip_terminal_punct(tweet['summary'])}。")
+    return lines[:4]
 
 
 def alias_section(alias, tweets):
