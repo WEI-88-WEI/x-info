@@ -620,16 +620,12 @@ def build_global_summary(selected_by_alias, all_selected):
         reverse=True,
     )
 
-    def tweet_key(tweet):
-        return tweet.get("tweet_id") or tweet.get("link") or tweet.get("summary")
-
-    def pick_by_tags(tags, limit=3, exclude=None):
-        exclude = exclude or set()
+    def pick_by_tags(tags, limit=4):
         items = []
         seen = set()
         for tweet in ranked:
-            key = tweet_key(tweet)
-            if key in exclude or key in seen:
+            key = tweet.get("tweet_id") or tweet.get("link") or tweet.get("summary")
+            if key in seen:
                 continue
             if not any(tag in tweet["tags"] for tag in tags):
                 continue
@@ -639,40 +635,34 @@ def build_global_summary(selected_by_alias, all_selected):
                 break
         return items
 
-    def join_summaries(items):
+    def clean_bits(items, limit=3):
         bits = []
-        seen_text = set()
+        seen = set()
         for item in items:
             text = strip_terminal_punct(item.get("summary", ""))
-            if not text or text in seen_text:
+            if not text or text in seen:
                 continue
-            seen_text.add(text)
+            seen.add(text)
             bits.append(text)
-        return "；".join(bits)
+            if len(bits) >= limit:
+                break
+        return bits
 
     summary_lines = []
-    used = set()
 
-    market_items = pick_by_tags(["btc", "macro", "trading"], limit=3, exclude=used)
-    market_line = join_summaries(market_items)
-    if market_line:
-        summary_lines.append(market_line + "。")
-        used.update(tweet_key(tweet) for tweet in market_items)
+    trading_bits = clean_bits(pick_by_tags(["trading", "btc"], limit=5), limit=3)
+    if trading_bits:
+        summary_lines.append("交易主线围着反弹与仓位变化展开：" + "；".join(trading_bits) + "。")
 
-    opportunity_items = pick_by_tags(["airdrop", "defi", "ai"], limit=2, exclude=used)
-    if len(opportunity_items) < 2:
-        extra = pick_by_tags(["trading", "macro", "btc"], limit=2, exclude=used)
-        for tweet in extra:
-            key = tweet_key(tweet)
-            if key not in used and tweet not in opportunity_items:
-                opportunity_items.append(tweet)
-            if len(opportunity_items) >= 2:
-                break
-    opportunity_line = join_summaries(opportunity_items)
-    if opportunity_line:
-        summary_lines.append(opportunity_line + "。")
+    macro_bits = clean_bits(pick_by_tags(["macro", "btc"], limit=5), limit=3)
+    if macro_bits:
+        summary_lines.append("宏观和结构性讨论也不少：" + "；".join(macro_bits) + "。")
 
-    return summary_lines[:2]
+    opportunity_bits = clean_bits(pick_by_tags(["airdrop", "defi", "ai"], limit=5), limit=3)
+    if opportunity_bits:
+        summary_lines.append("机会更具体地落在几类可执行线索上：" + "；".join(opportunity_bits) + "。")
+
+    return summary_lines[:3]
 
 
 def alias_section(alias, tweets):

@@ -19,11 +19,12 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 10. Add a short `全部列表总结` near the top. Write it as an overall digest of the whole batch, not as a showcase of a few picked tweets.
 11. Do not use `先看：` or any similar picked-items intro.
 12. Summarize the batch-level picture with concrete content from this batch: actual price moves, policy events, protocol updates, funding flows, trading setups, numbers, and conditions.
-13. Do not let the same tweet or the same fact pattern appear twice in `全部列表总结`, even if it matches multiple tags.
-14. The second summary line must avoid repeating items already used in the first line.
-15. Do not start with bookkeeping or meta-stat lines like `这批内容主要集中在…` or `本次共整理…`.
-16. Avoid vague analyst filler like `风险偏好回升` / `值得继续跟` / `情绪改善` unless tied to specific events or numbers from the batch.
-17. Do not include alias-distribution lines like `空投/积分主要在…` / `交易主要在…` / `宏观主要在…`.
+13. `全部列表总结` should be thematic synthesis, not stitched-together tweet excerpts. Rewrite and compress across multiple tweets into 2-3 concise paragraphs.
+14. Prefer a stable structure when material exists: `交易主线...` / `宏观和结构性讨论...` / `机会更具体地落在...`.
+15. Do not let the same tweet or the same fact pattern appear twice in `全部列表总结`, even if it matches multiple tags.
+16. Do not start with bookkeeping or meta-stat lines like `这批内容主要集中在…` or `本次共整理…`.
+17. Avoid vague analyst filler like `风险偏好回升` / `值得继续跟` / `情绪改善` unless tied to specific events or numbers from the batch.
+18. Do not include alias-distribution lines like `空投/积分主要在…` / `交易主要在…` / `宏观主要在…`.
 11. Under each alias, keep only the strongest subset after ranking. Prefer fewer, sharper items over completeness.
 12. For each kept tweet, write one compact Chinese summary line. Then put that tweet's tags, posting user display name plus handle, and original link directly under the item.
 13. Do not emit `判断` or `动作` lines, and do not append interpretive tails like `这条偏政策和监管信号` or `适合放进宏观环境变量里看`.
