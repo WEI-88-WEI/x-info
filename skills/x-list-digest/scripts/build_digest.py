@@ -620,41 +620,59 @@ def build_global_summary(selected_by_alias, all_selected):
         reverse=True,
     )
 
-    def pick_by_tag(tag, limit=2):
+    def tweet_key(tweet):
+        return tweet.get("tweet_id") or tweet.get("link") or tweet.get("summary")
+
+    def pick_by_tags(tags, limit=3, exclude=None):
+        exclude = exclude or set()
         items = []
         seen = set()
         for tweet in ranked:
-            if tag not in tweet["tags"]:
+            key = tweet_key(tweet)
+            if key in exclude or key in seen:
                 continue
-            tid = tweet.get("tweet_id")
-            if tid in seen:
+            if not any(tag in tweet["tags"] for tag in tags):
                 continue
-            seen.add(tid)
+            seen.add(key)
             items.append(tweet)
             if len(items) >= limit:
                 break
         return items
 
     def join_summaries(items):
-        return "；".join(strip_terminal_punct(item["summary"]) for item in items if item.get("summary"))
+        bits = []
+        seen_text = set()
+        for item in items:
+            text = strip_terminal_punct(item.get("summary", ""))
+            if not text or text in seen_text:
+                continue
+            seen_text.add(text)
+            bits.append(text)
+        return "；".join(bits)
 
     summary_lines = []
+    used = set()
 
-    market_items = pick_by_tag("btc", 2) + [x for x in pick_by_tag("macro", 2) if x not in pick_by_tag("btc", 2)]
-    if market_items:
-        summary_lines.append(join_summaries(market_items[:3]) + "。")
+    market_items = pick_by_tags(["btc", "macro", "trading"], limit=3, exclude=used)
+    market_line = join_summaries(market_items)
+    if market_line:
+        summary_lines.append(market_line + "。")
+        used.update(tweet_key(tweet) for tweet in market_items)
 
-    trade_items = pick_by_tag("trading", 2)
-    defi_airdrop_items = []
-    for tag in ("airdrop", "defi", "ai"):
-        for tweet in pick_by_tag(tag, 1):
-            if tweet not in trade_items and tweet not in defi_airdrop_items:
-                defi_airdrop_items.append(tweet)
-    if trade_items or defi_airdrop_items:
-        combined = (trade_items + defi_airdrop_items)[:3]
-        summary_lines.append(join_summaries(combined) + "。")
+    opportunity_items = pick_by_tags(["airdrop", "defi", "ai"], limit=2, exclude=used)
+    if len(opportunity_items) < 2:
+        extra = pick_by_tags(["trading", "macro", "btc"], limit=2, exclude=used)
+        for tweet in extra:
+            key = tweet_key(tweet)
+            if key not in used and tweet not in opportunity_items:
+                opportunity_items.append(tweet)
+            if len(opportunity_items) >= 2:
+                break
+    opportunity_line = join_summaries(opportunity_items)
+    if opportunity_line:
+        summary_lines.append(opportunity_line + "。")
 
-    return [line for line in summary_lines if line][:2]
+    return summary_lines[:2]
 
 
 def alias_section(alias, tweets):
