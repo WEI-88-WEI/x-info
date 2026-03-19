@@ -620,7 +620,7 @@ def build_global_summary(selected_by_alias, all_selected):
         reverse=True,
     )
 
-    def pick_by_tags(tags, limit=4):
+    def pick_by_tags(tags, limit=6):
         items = []
         seen = set()
         for tweet in ranked:
@@ -635,12 +635,15 @@ def build_global_summary(selected_by_alias, all_selected):
                 break
         return items
 
-    def clean_bits(items, limit=3):
+    used_text = set()
+
+    def clean_bits(items, limit=3, avoid=None):
+        avoid = avoid or set()
         bits = []
         seen = set()
         for item in items:
             text = strip_terminal_punct(item.get("summary", ""))
-            if not text or text in seen:
+            if not text or text in seen or text in avoid or text in used_text:
                 continue
             seen.add(text)
             bits.append(text)
@@ -648,19 +651,31 @@ def build_global_summary(selected_by_alias, all_selected):
                 break
         return bits
 
+    def add_line(prefix, bits):
+        if not bits:
+            return None
+        used_text.update(bits)
+        return prefix + "；".join(bits) + "。"
+
     summary_lines = []
 
-    trading_bits = clean_bits(pick_by_tags(["trading", "btc"], limit=5), limit=3)
-    if trading_bits:
-        summary_lines.append("交易主线围着反弹与仓位变化展开：" + "；".join(trading_bits) + "。")
+    trading_bits = clean_bits(pick_by_tags(["trading", "btc"], limit=6), limit=2)
+    line = add_line("交易主线围着价格变化、仓位切换和资金动向展开：", trading_bits)
+    if line:
+        summary_lines.append(line)
 
-    macro_bits = clean_bits(pick_by_tags(["macro", "btc"], limit=5), limit=3)
-    if macro_bits:
-        summary_lines.append("宏观和结构性讨论也不少：" + "；".join(macro_bits) + "。")
+    macro_bits = clean_bits(pick_by_tags(["macro"], limit=6), limit=2)
+    if len(macro_bits) < 2:
+        extra = clean_bits(pick_by_tags(["btc"], limit=6), limit=2 - len(macro_bits))
+        macro_bits += extra
+    line = add_line("宏观和结构性讨论也不少：", macro_bits)
+    if line:
+        summary_lines.append(line)
 
-    opportunity_bits = clean_bits(pick_by_tags(["airdrop", "defi", "ai"], limit=5), limit=3)
-    if opportunity_bits:
-        summary_lines.append("机会更具体地落在几类可执行线索上：" + "；".join(opportunity_bits) + "。")
+    opportunity_bits = clean_bits(pick_by_tags(["airdrop", "defi", "ai"], limit=6), limit=2)
+    line = add_line("机会更具体地落在几类可执行线索上：", opportunity_bits)
+    if line:
+        summary_lines.append(line)
 
     return summary_lines[:3]
 
