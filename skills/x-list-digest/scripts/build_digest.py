@@ -725,6 +725,44 @@ def write_window_file(date_key, group):
 
     out_dir = DATA_DIR / date_key
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    existing = sorted(out_dir.glob("*.md"))
+    if len(all_selected) == 1 and existing:
+        prev = existing[-1]
+        prev_name = prev.stem
+        if "~" in prev_name:
+            prev_start, prev_end = prev_name.split("~", 1)
+            prev_end_dt = datetime.fromisoformat(f"{date_key}T{prev_end}")
+            start_dt = datetime.fromisoformat(f"{date_key}T{start}")
+            gap_seconds = (start_dt - prev_end_dt).total_seconds()
+            if 0 <= gap_seconds <= 1800:
+                text = prev.read_text()
+                merged_end = end
+                text = text.replace(f"window: {prev_start}~{prev_end}", f"window: {prev_start}~{merged_end}")
+                text = text.replace(f"# 列表推文汇总｜{date_key}｜{prev_start}~{prev_end}", f"# 列表推文汇总｜{date_key}｜{prev_start}~{merged_end}")
+                for alias in aliases_present:
+                    item_lines = []
+                    for tweet in selected_by_alias[alias]:
+                        item_lines += [
+                            f"- {tweet['summary']}",
+                            f"  - 标签：{' '.join('#' + tag for tag in tweet['tags'])}",
+                            f"  - 用户：{user_label(tweet)}",
+                            f"  - 链接：{tweet['link']}",
+                        ]
+                    block = "\n" + "\n".join(item_lines) + "\n"
+                    marker = f"## {alias}\n\n### Alpha 提取\n"
+                    if marker in text:
+                        insert_pos = text.find("\n## ", text.find(marker) + len(marker))
+                        if insert_pos == -1:
+                            insert_pos = len(text)
+                        text = text[:insert_pos].rstrip() + block + "\n" + text[insert_pos:].lstrip("\n")
+                    else:
+                        text = text.rstrip() + "\n\n" + "\n".join(alias_section(alias, selected_by_alias[alias])) + "\n"
+                prev.unlink(missing_ok=True)
+                merged_path = out_dir / f"{prev_start}~{merged_end}.md"
+                merged_path.write_text(text.rstrip() + "\n")
+                return merged_path, unique_tags(all_selected)
+
     out_path = out_dir / f"{start}~{end}.md"
     out_path.write_text("\n".join(body).rstrip() + "\n")
     return out_path, unique_tags(all_selected)
