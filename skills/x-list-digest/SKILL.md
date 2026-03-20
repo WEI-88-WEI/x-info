@@ -24,10 +24,12 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 15. Each paragraph must stay on its own theme only. Do not mix `交易`/`宏观`/`机会` content into the wrong paragraph.
 16. Do not let the same tweet or the same fact pattern appear twice in `全部列表总结`, even if it matches multiple tags.
 17. Do not quote or lightly rephrase multiple tweet summaries back-to-back; synthesize them into one coherent paragraph with concrete facts.
-18. Keep each paragraph tight: usually 2-3 concrete points are enough. Prefer fewer, sharper details over long stitched sentences.
-19. Do not start with bookkeeping or meta-stat lines like `这批内容主要集中在…` or `本次共整理…`.
-20. Avoid vague analyst filler like `风险偏好回升` / `值得继续跟` / `情绪改善` unless tied to specific events or numbers from the batch.
-21. Do not include alias-distribution lines like `空投/积分主要在…` / `交易主要在…` / `宏观主要在…`.
+18. Keep each paragraph tight: usually 2 concrete points are enough. Prefer fewer, sharper details over long stitched sentences.
+19. Aggressively compress: remove chatty lead-ins, self-talk, rhetorical filler, and repeated setup clauses from source tweets before summarizing.
+20. Do not let any single summary paragraph become a long run-on sentence packed with tweet fragments.
+21. Do not start with bookkeeping or meta-stat lines like `这批内容主要集中在…` or `本次共整理…`.
+22. Avoid vague analyst filler like `风险偏好回升` / `值得继续跟` / `情绪改善` unless tied to specific events or numbers from the batch.
+23. Do not include alias-distribution lines like `空投/积分主要在…` / `交易主要在…` / `宏观主要在…`.
 11. Under each alias, keep only the strongest subset after ranking. Prefer fewer, sharper items over completeness.
 12. For each kept tweet, write one compact Chinese summary line. Then put that tweet's tags, posting user display name plus handle, and original link directly under the item.
 13. Do not emit `判断` or `动作` lines, and do not append interpretive tails like `这条偏政策和监管信号` or `适合放进宏观环境变量里看`.
