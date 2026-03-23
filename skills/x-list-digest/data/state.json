@@ -1,38 +1,38 @@
 {
   "aliases": {
     "星": {
-      "latest_tweet_id": "2035915600237928760",
-      "latest_created_at": "2026-03-23T03:04:39+00:00",
+      "latest_tweet_id": "",
+      "latest_created_at": "2026-03-19T15:10:19+00:00",
       "updated_at": "2026-03-23T03:10:12.823503+00:00"
     },
     "看": {
-      "latest_tweet_id": "2035916444182212863",
-      "latest_created_at": "2026-03-23T03:08:00+00:00",
+      "latest_tweet_id": "",
+      "latest_created_at": "2026-03-19T15:10:19+00:00",
       "updated_at": "2026-03-23T03:10:14.507684+00:00"
     },
     "maomao": {
-      "latest_tweet_id": "2035915581866872924",
-      "latest_created_at": "2026-03-23T03:04:34+00:00",
+      "latest_tweet_id": "",
+      "latest_created_at": "2026-03-19T15:10:19+00:00",
       "updated_at": "2026-03-23T03:10:15.886695+00:00"
     },
     "meme": {
-      "latest_tweet_id": "2035915904660406310",
-      "latest_created_at": "2026-03-23T03:05:51+00:00",
+      "latest_tweet_id": "",
+      "latest_created_at": "2026-03-19T15:10:19+00:00",
       "updated_at": "2026-03-23T03:10:17.138661+00:00"
     },
     "生态": {
-      "latest_tweet_id": "2035911410199511293",
-      "latest_created_at": "2026-03-23T02:48:00+00:00",
+      "latest_tweet_id": "",
+      "latest_created_at": "2026-03-19T15:10:19+00:00",
       "updated_at": "2026-03-23T03:10:18.605817+00:00"
     },
     "项目": {
-      "latest_tweet_id": "2035855603331916037",
-      "latest_created_at": "2026-03-22T23:06:14+00:00",
+      "latest_tweet_id": "",
+      "latest_created_at": "2026-03-19T15:10:19+00:00",
       "updated_at": "2026-03-23T03:10:20.050366+00:00"
     },
     "其他": {
-      "latest_tweet_id": "2035891064221904921",
-      "latest_created_at": "2026-03-23T01:27:09+00:00",
+      "latest_tweet_id": "",
+      "latest_created_at": "2026-03-19T15:10:19+00:00",
       "updated_at": "2026-03-23T03:10:21.535557+00:00"
     }
   }
