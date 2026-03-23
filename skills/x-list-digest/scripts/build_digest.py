@@ -55,6 +55,16 @@ LOW_SIGNAL_PATTERNS = [
     r"\bstay tuned\b",
     r"\bloading\b",
 ]
+GLOBAL_NOISE_PATTERNS = [
+    r"优质[、，]?努力博主推荐",
+    r"最近沉迷羽毛球",
+    r"打羽毛球",
+    r"我做空投满打满算两年",
+    r"现在敲空投这两个字",
+    r"未来\s*10\s*年最",
+    r"底层逻辑",
+    r"感同身受",
+]
 ANALYSIS_TAIL_PATTERNS = [
     r"[，,；; ]*这条偏[^。；!?！？]*",
     r"[，,；; ]*偏(?:政策|监管|情绪|观点|叙事|宏观)[^。；!?！？]*",
@@ -613,6 +623,37 @@ def strip_terminal_punct(text):
     return text.rstrip("。；，,;:！？!? ")
 
 
+def is_global_noise(text):
+    clean_text = strip_terminal_punct(text or "")
+    if not clean_text:
+        return True
+    return any(re.search(pattern, clean_text, re.I) for pattern in GLOBAL_NOISE_PATTERNS)
+
+
+def compress_for_global_summary(text):
+    text = strip_terminal_punct(text or "")
+    if not text or is_global_noise(text):
+        return None
+    parts = [normalize_clause(p) for p in re.split(r"[；;]", text) if normalize_clause(p)]
+    if not parts:
+        return None
+    kept = []
+    for part in parts:
+        if is_global_noise(part):
+            continue
+        if len(part) < 12 and not re.search(r"\d|\$", part):
+            continue
+        kept.append(part)
+        if len(kept) >= 2:
+            break
+    if not kept:
+        return None
+    merged = "；".join(kept)
+    if len(merged) > 90:
+        merged = smart_truncate(merged, limit=90).rstrip("。")
+    return merged
+
+
 def build_global_summary(selected_by_alias, all_selected):
     ranked = sorted(
         all_selected,
@@ -620,33 +661,39 @@ def build_global_summary(selected_by_alias, all_selected):
         reverse=True,
     )
 
-    def pick_by_tags(tags, limit=6):
+    def pick_by_tags(tags, limit=8, used_ids=None):
+        used_ids = used_ids or set()
         items = []
         seen = set()
         for tweet in ranked:
             key = tweet.get("tweet_id") or tweet.get("link") or tweet.get("summary")
-            if key in seen:
+            if key in seen or key in used_ids:
                 continue
             if not any(tag in tweet["tags"] for tag in tags):
                 continue
+            fact = compress_for_global_summary(tweet.get("summary", ""))
+            if not fact:
+                continue
             seen.add(key)
-            items.append(tweet)
+            item = dict(tweet)
+            item["global_fact"] = fact
+            items.append(item)
             if len(items) >= limit:
                 break
         return items
 
-    used_text = set()
+    used_ids = set()
 
-    def clean_bits(items, limit=3, avoid=None):
-        avoid = avoid or set()
+    def clean_bits(items, limit=2):
         bits = []
         seen = set()
         for item in items:
-            text = strip_terminal_punct(item.get("summary", ""))
-            if not text or text in seen or text in avoid or text in used_text:
+            key = item.get("tweet_id") or item.get("link") or item.get("summary")
+            fact = item.get("global_fact") or compress_for_global_summary(item.get("summary", ""))
+            if not fact or fact in seen:
                 continue
-            seen.add(text)
-            bits.append(text)
+            seen.add(fact)
+            bits.append((key, fact))
             if len(bits) >= limit:
                 break
         return bits
@@ -654,26 +701,24 @@ def build_global_summary(selected_by_alias, all_selected):
     def add_line(prefix, bits):
         if not bits:
             return None
-        used_text.update(bits)
-        return prefix + "；".join(bits) + "。"
+        for key, _ in bits:
+            used_ids.add(key)
+        return prefix + "；".join(text for _, text in bits) + "。"
 
     summary_lines = []
 
-    trading_bits = clean_bits(pick_by_tags(["trading", "btc"], limit=6), limit=2)
-    line = add_line("交易主线围着价格变化、仓位切换和资金动向展开：", trading_bits)
+    trading_bits = clean_bits(pick_by_tags(["trading", "btc"], limit=8, used_ids=used_ids), limit=2)
+    line = add_line("交易主线还是围着高波动里的被动应对展开：", trading_bits)
     if line:
         summary_lines.append(line)
 
-    macro_bits = clean_bits(pick_by_tags(["macro"], limit=6), limit=2)
-    if len(macro_bits) < 2:
-        extra = clean_bits(pick_by_tags(["btc"], limit=6), limit=2 - len(macro_bits))
-        macro_bits += extra
-    line = add_line("宏观和结构性讨论也不少：", macro_bits)
+    macro_bits = clean_bits(pick_by_tags(["macro"], limit=8, used_ids=used_ids), limit=2)
+    line = add_line("宏观和结构性压力仍然在：", macro_bits)
     if line:
         summary_lines.append(line)
 
-    opportunity_bits = clean_bits(pick_by_tags(["airdrop", "defi", "ai"], limit=6), limit=2)
-    line = add_line("机会更具体地落在几类可执行线索上：", opportunity_bits)
+    opportunity_bits = clean_bits(pick_by_tags(["airdrop", "defi", "ai"], limit=8, used_ids=used_ids), limit=2)
+    line = add_line("机会侧还是有东西可做，但更偏执行型：", opportunity_bits)
     if line:
         summary_lines.append(line)
 

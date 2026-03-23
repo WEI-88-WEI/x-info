@@ -22,11 +22,13 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 13. Each summary bullet must contain only 1-2 hard facts from this batch: concrete prices, policy events, protocol updates, flows, numbers, project names, or explicit actions.
 14. Do not use bookkeeping or filler such as `今天信息密度最高的列表`、`跨列表主线`、`噪音主要集中在`、`值得关注`、`情绪改善`、`风险偏好回升`.
 15. Do not quote or lightly stitch together multiple tweet summaries; synthesize the batch into concise briefing prose that matches the reference note.
-16. Each bullet must stay on its own theme. Do not mix `交易` / `宏观` / `机会` content into the wrong bullet.
-17. Do not let the same tweet or fact pattern appear twice in `全部列表总结`.
-18. Aggressively compress: remove chatty lead-ins, self-talk, rhetorical filler, repost framing, and repeated setup clauses.
-19. Under each alias, keep only the strongest subset after ranking. Prefer fewer, sharper items over completeness.
-20. For each kept tweet, write one compact Chinese summary line that can stand alone when read in isolation.
+16. `全部列表总结` is forbidden from reusing long raw tweet clauses verbatim. Convert selected items into your own compressed prose first, then synthesize.
+17. Each bullet must stay on its own theme. Do not mix `交易` / `宏观` / `机会` content into the wrong bullet.
+18. Do not let the same tweet or fact pattern appear twice in `全部列表总结`.
+19. Aggressively compress: remove chatty lead-ins, self-talk, rhetorical filler, repost framing, and repeated setup clauses.
+20. Drop obvious noise from both the overall summary and alias sections, including personal life updates, blogger recommendations, generic motivation, sports metaphors, and broad career/AI hot-take lists.
+21. Under each alias, keep only the strongest subset after ranking. Prefer fewer, sharper items over completeness.
+22. For each kept tweet, write one compact Chinese summary line that can stand alone when read in isolation.
 21. Tweet-level extraction must follow the same standard as the reference note: preserve the concrete fact pattern, strip filler, and avoid analyst-sounding tails.
 22. Do not emit `判断` or `动作` lines, and do not append interpretive tails like `这条偏政策和监管信号` or `适合放进宏观环境变量里看`.
 23. For non-Chinese tweets, rewrite the main content into concise Chinese instead of dumping the English original.
