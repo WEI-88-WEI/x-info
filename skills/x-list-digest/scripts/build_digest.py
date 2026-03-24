@@ -64,6 +64,12 @@ GLOBAL_NOISE_PATTERNS = [
     r"未来\s*10\s*年最",
     r"底层逻辑",
     r"感同身受",
+    r"what the fuck",
+    r"畜生项目方",
+    r"侵吞我的sol",
+    r"投资者跟狗一样",
+    r"很有意思",
+    r"终于公布了",
 ]
 ANALYSIS_TAIL_PATTERNS = [
     r"[，,；; ]*这条偏[^。；!?！？]*",
@@ -643,14 +649,18 @@ def compress_for_global_summary(text):
             continue
         if len(part) < 12 and not re.search(r"\d|\$", part):
             continue
+        if len(part) > 60:
+            continue
+        if len(re.findall(r"[，；,;]", part)) >= 2 and not re.search(r"\d|\$", part):
+            continue
         kept.append(part)
         if len(kept) >= 2:
             break
     if not kept:
         return None
     merged = "；".join(kept)
-    if len(merged) > 90:
-        merged = smart_truncate(merged, limit=90).rstrip("。")
+    if len(merged) > 72:
+        merged = smart_truncate(merged, limit=72).rstrip("。")
     return merged
 
 

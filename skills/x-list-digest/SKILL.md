@@ -23,10 +23,12 @@ Use this skill to maintain a repeatable pipeline for the configured X lists.
 14. Do not use bookkeeping or filler such as `今天信息密度最高的列表`、`跨列表主线`、`噪音主要集中在`、`值得关注`、`情绪改善`、`风险偏好回升`.
 15. Do not quote or lightly stitch together multiple tweet summaries; synthesize the batch into concise briefing prose that matches the reference note.
 16. `全部列表总结` is forbidden from reusing long raw tweet clauses verbatim. Convert selected items into your own compressed prose first, then synthesize.
-17. Each bullet must stay on its own theme. Do not mix `交易` / `宏观` / `机会` content into the wrong bullet.
-18. Do not let the same tweet or fact pattern appear twice in `全部列表总结`.
-19. Aggressively compress: remove chatty lead-ins, self-talk, rhetorical filler, repost framing, and repeated setup clauses.
-20. Drop obvious noise from both the overall summary and alias sections, including personal life updates, blogger recommendations, generic motivation, sports metaphors, and broad career/AI hot-take lists.
+17. In `全部列表总结`, never copy any source sentence fragment longer than about 12 Chinese characters / 6 English words unless it is a hard fact such as a ticker, price, quantity, or protocol name.
+18. If a summary bullet still reads like pasted tweet wording, treat it as failed output and rewrite it before saving.
+19. Each bullet must stay on its own theme. Do not mix `交易` / `宏观` / `机会` content into the wrong bullet.
+20. Do not let the same tweet or fact pattern appear twice in `全部列表总结`.
+21. Aggressively compress: remove chatty lead-ins, self-talk, rhetorical filler, repost framing, and repeated setup clauses.
+22. Drop obvious noise from both the overall summary and alias sections, including personal life updates, blogger recommendations, generic motivation, sports metaphors, emotional venting, and broad career/AI hot-take lists.
 21. Under each alias, keep only the strongest subset after ranking. Prefer fewer, sharper items over completeness.
 22. For each kept tweet, write one compact Chinese summary line that can stand alone when read in isolation.
 21. Tweet-level extraction must follow the same standard as the reference note: preserve the concrete fact pattern, strip filler, and avoid analyst-sounding tails.
