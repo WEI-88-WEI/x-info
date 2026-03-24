@@ -8,6 +8,10 @@
 
 - `skills/x-list-digest`
 
+## 额外内容
+
+- `memory/openclaw/MEMORY.md` —— OpenClaw 主会话的长期记忆快照，用来保存稳定偏好、摘要风格要求和少量需要跨会话延续的约束
+
 ---
 
 ## 这个仓库是干什么的
@@ -331,6 +335,9 @@ digest 的价值高于 dump。
 ```text
 x-info/
 ├── README.md
+├── memory/
+│   └── openclaw/
+│       └── MEMORY.md
 └── skills/
     └── x-list-digest/
         ├── SKILL.md
